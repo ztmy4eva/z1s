@@ -281,6 +281,8 @@ function applyFilter() {
   </div>
 </div>
 
+  <script>
+
   function setInfo(id, value) {
   const cell = document.getElementById(id);
   if (!cell) return;
@@ -293,9 +295,8 @@ function applyFilter() {
   } else {
     row.style.display = 'none';
   }
-}
-
-  <script>
+}    
+    
 function openModal(card) {
   document.getElementById('cardModal').style.display = 'flex';
   document.getElementById('modalImage').src = card.src;
@@ -322,6 +323,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
