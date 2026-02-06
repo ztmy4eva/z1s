@@ -245,13 +245,39 @@ function applyFilter() {
 <!-- 카드 확대 모달 -->
 <div id="cardModal" class="modal" onclick="closeModal(event)">
   <div class="modal-content">
+
     <img id="modalImage" />
-    <div class="modal-info">
-      <h2 id="modalTitle"></h2>
-      <p id="modalDesc"></p>
-    </div>
+
+    <table class="card-table">
+      <tr>
+        <th>종류</th>
+        <td id="info-type"></td>
+      </tr>
+      <tr>
+        <th>시즌</th>
+        <td id="info-season"></td>
+      </tr>
+      <tr>
+        <th>레어도</th>
+        <td id="info-rarity"></td>
+      </tr>
+      <tr>
+        <th>코스트</th>
+        <td id="info-cost"></td>
+      </tr>
+      <tr>
+        <th>파워</th>
+        <td id="info-power"></td>
+      </tr>
+      <tr>
+        <th>효과</th>
+        <td id="info-effect"></td>
+      </tr>
+    </table>
+
   </div>
 </div>
+
 
   <script>
 function openModal(card) {
@@ -276,6 +302,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
