@@ -52,7 +52,7 @@
 
     <!-- 카드 영역 -->
     <main class="card-grid">
-      <img src="cards/zutomayocard_1st_1.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
+      <img src="cards/zutomayocard_1st_1.png" class="card" data-season="1" data-rarity="UR" data-type="character" onclick="openModal(this)" />
       <img src="cards/zutomayocard_1st_2.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
       <img src="cards/zutomayocard_1st_3.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
       <img src="cards/zutomayocard_1st_4.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
@@ -242,9 +242,41 @@ function applyFilter() {
 
 </script>
 
+<!-- 카드 확대 모달 -->
+<div id="cardModal" class="modal" onclick="closeModal(event)">
+  <div class="modal-content">
+    <img id="modalImage" />
+    <div class="modal-info">
+      <h2 id="modalTitle"></h2>
+      <p id="modalDesc"></p>
+    </div>
+  </div>
+</div>
 
+  <script>
+function openModal(card) {
+  document.getElementById('cardModal').style.display = 'flex';
+  document.getElementById('modalImage').src = card.src;
+
+  document.getElementById('info-type').textContent = card.dataset.type || '';
+  document.getElementById('info-season').textContent = card.dataset.season || '';
+  document.getElementById('info-rarity').textContent = card.dataset.rarity || '';
+  document.getElementById('info-cost').textContent = card.dataset.cost || '';
+  document.getElementById('info-power').textContent = card.dataset.power || '';
+  document.getElementById('info-effect').textContent = card.dataset.effect || '';
+}
+
+function closeModal(e) {
+  if (e.target.id === 'cardModal') {
+    e.target.style.display = 'none';
+  }
+}
+</script>
+
+  
   </body>
 </html>
+
 
 
 
