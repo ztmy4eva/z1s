@@ -69,6 +69,10 @@ button.active {
   border-radius: 8px;
 }
 
+.modal-info td {
+  white-space: pre-line;
+}
+
 .card-table {
   border-collapse: collapse;
   min-width: 260px;
