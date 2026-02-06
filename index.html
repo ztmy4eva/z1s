@@ -52,7 +52,23 @@
 
     <!-- 카드 영역 -->
     <main class="card-grid">
-      <img src="cards/zutomayocard_1st_1.png" class="card" data-season="1" data-rarity="UR" data-type="character" data-name="공부 니라 "data-season="1" data-attribute="어둠" data-chronos="5" data-power="밤 : 130 / 낮 : 50"  data-powercost="♦︎♦︎♦︎♦︎♦︎" data-sendtopower="♦︎ × 0" data-effect=" " onclick="openModal(this)" />
+      <img 
+       src="cards/zutomayocard_1st_1.png" 
+       class="card"
+       onclick="openModal(this)"
+        
+       data-name="공부 니라"
+       data-season="1"
+       data-rarity="UR"
+       data-type="character" 
+       data-attribute="어둠" 
+      
+       data-chronos="5"
+       data-power="밤 : 130 / 낮 : 50"
+       data-powercost="♦︎♦︎♦︎♦︎♦︎"
+       data-sendtopower="♦︎ × 0"
+       data-effect=" " 
+      />
       <img src="cards/zutomayocard_1st_2.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
       <img src="cards/zutomayocard_1st_3.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
       <img src="cards/zutomayocard_1st_4.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
@@ -276,11 +292,11 @@ function applyFilter() {
         </tr>
         <tr>
           <th>파워코스트</th>
-          <td id="info-powercost"></td>
+          <td id="info-powerCost"></td>
         </tr>
         <tr>
           <th>센드 투 파워</th>
-          <td id="info-sendtopower"></td>
+          <td id="info-sendToPower"></td>
         </tr>
         <tr>
           <th>효과</th>
@@ -321,6 +337,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
