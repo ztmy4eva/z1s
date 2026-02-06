@@ -73,27 +73,38 @@
     });
   }
 
-  function setActiveButton(button, groupSelector) {
-    const buttons = document.querySelectorAll(groupSelector);
-    buttons.forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
+  function clearActive(groupSelector) {
+    document
+      .querySelectorAll(groupSelector)
+      .forEach(btn => btn.classList.remove('active'));
   }
 
+  // ✅ 시즌: 무조건 선택
   function filterSeason(season, button) {
     currentSeason = season;
-    setActiveButton(button, '.seasons button');
+    clearActive('.seasons button');
+    button.classList.add('active');
     applyFilter();
   }
 
+  // ✅ 레어도: 토글
   function filterRarity(rarity, button) {
-    currentRarity = rarity;
-    setActiveButton(button, '.sidebar button');
+    if (button.classList.contains('active')) {
+      button.classList.remove('active');
+      currentRarity = 'all';
+    } else {
+      clearActive('.sidebar button');
+      button.classList.add('active');
+      currentRarity = rarity;
+    }
     applyFilter();
   }
 </script>
 
+
   </body>
 </html>
+
 
 
 
