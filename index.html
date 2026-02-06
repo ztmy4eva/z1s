@@ -1,134 +1,57 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>ZUTOMAYO CARD 번역</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body {
-  font-family: system-ui, sans-serif;
-  margin: 0;
-  padding: 12px;
-  background: #f5f5f5;
-}
-
-h2 {
-  margin-top: 24px;
-}
-
-#search {
-  width: 100%;
-  max-width: 400px;
-  padding: 8px;
-  margin: 0 auto 16px;
-  display: block;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
-}
-
-.card {
-  background: white;
-  padding: 8px;
-  border-radius: 8px;
-  text-align: center;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-#modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-#modalContent {
-  background: white;
-  max-width: 600px;
-  width: 90%;
-  padding: 16px;
-  border-radius: 8px;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>ZUTOMAYO CARD 도감</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<input id="search" placeholder="카드 검색">
+  <!-- 상단 바 -->
+  <header class="top-bar">
+    <div class="seasons">
+      <button>시즌1</button>
+      <button>시즌2</button>
+      <button>시즌3</button>
+      <button>시즌4</button>
+    </div>
 
-<div id="container"></div>
+    <input type="text" placeholder="카드 검색" />
+  </header>
 
-<div id="modal" onclick="this.style.display='none'">
-  <div id="modalContent" onclick="event.stopPropagation()"></div>
-</div>
+  <div class="container">
 
-<script>
-const sheetUrl = "여기에_CSV_링크_붙여넣기";
+    <!-- 왼쪽 필터 -->
+    <aside class="sidebar">
+      <h3>전체</h3>
 
-let cards = [];
+      <h4>캐릭터 카드</h4>
+      <ul>
+        <li>UR</li>
+        <li>SR</li>
+        <li>R</li>
+        <li>N</li>
+        <li>SE</li>
+      </ul>
 
-fetch(sheetUrl)
-  .then(r => r.text())
-  .then(text => {
-    const rows = text.trim().split("\n").map(r => r.split(","));
-    const keys = rows.shift();
+      <h4>이벤트 카드</h4>
+      <ul>
+        <li>UR</li>
+        <li>SR</li>
+        <li>R</li>
+        <li>N</li>
+      </ul>
+    </aside>
 
-    cards = rows.map(r => Object.fromEntries(keys.map((k,i)=>[k,r[i]])));
-    render();
-  });
+    <!-- 카드 영역 -->
+    <main class="card-grid">
+      <img src="cards/sample1.png" />
+      <img src="cards/sample2.png" />
+      <img src="cards/sample3.png" />
+      <img src="cards/sample4.png" />
+    </main>
 
-function render(filter="") {
-  const container = document.getElementById("container");
-  container.innerHTML = "";
-
-  [1,2,3].forEach(season => {
-    const seasonCards = cards.filter(c =>
-      c.season == season &&
-      JSON.stringify(c).toLowerCase().includes(filter)
-    );
-    if (!seasonCards.length) return;
-
-    const h = document.createElement("h2");
-    h.textContent = `시즌 ${season}`;
-    container.appendChild(h);
-
-    const wrap = document.createElement("div");
-    wrap.className = "cards";
-
-    seasonCards.forEach(c => {
-      const div = document.createElement("div");
-      div.className = "card";
-      div.textContent = c.card_name;
-      div.onclick = () => openModal(c);
-      wrap.appendChild(div);
-    });
-
-    container.appendChild(wrap);
-  });
-}
-
-function openModal(c) {
-  document.getElementById("modal").style.display = "flex";
-  document.getElementById("modalContent").innerHTML = `
-    <h2>${c.card_name}</h2>
-    <p><b>시즌</b>: ${c.season}</p>
-    <p><b>일본어</b><br>${c.jp_text}</p>
-    <p><b>번역</b><br>${c.kr_text}</p>
-    <p><b>효과</b><br>${c.effect}</p>
-    <p><b>비고</b><br>${c.note}</p>
-  `;
-}
-
-document.getElementById("search").oninput = e =>
-  render(e.target.value.toLowerCase());
-</script>
+  </div>
 
 </body>
 </html>
