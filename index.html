@@ -22,33 +22,153 @@
   <div class="container">
 
     <!-- 왼쪽 필터 -->
-    <aside class="sidebar">
-      <h3>전체</h3>
+<aside class="sidebar">
+  <h3>카드 종류</h3>
 
-      <h4>캐릭터 카드</h4>
-      <ul>
-        <button onclick="filterRarity('UR', this)">UR</button>
-        <button onclick="filterRarity('SR', this)">SR</button>
-        <button onclick="filterRarity('R', this)">R</button>
-        <button onclick="filterRarity('N', this)">N</button>
-        <button onclick="filterRarity('SE', this)">SE</button>
-      </ul>
+  <button
+    class="type-button"
+    onclick="filterType('character', this)"
+  >
+    캐릭터 카드
+  </button>
 
-      <h4>인챈트 카드</h4>
-      <ul>
-        <button onclick="filterRarity('UR', this)">UR</button>
-        <button onclick="filterRarity('SR', this)">SR</button>
-        <button onclick="filterRarity('R', this)">R</button>
-        <button onclick="filterRarity('N', this)">N</button>
-      </ul>
-    </aside>
+  <button
+    class="type-button"
+    onclick="filterType('enchant', this)"
+  >
+    인챈트 카드
+  </button>
+
+  <hr />
+
+  <h3>레어도</h3>
+  <button onclick="filterRarity('UR', this)">UR</button>
+  <button onclick="filterRarity('SR', this)">SR</button>
+  <button onclick="filterRarity('R', this)">R</button>
+  <button onclick="filterRarity('N', this)">N</button>
+  <button onclick="filterRarity('SE', this)">SE</button>
+</aside>
+
 
     <!-- 카드 영역 -->
     <main class="card-grid">
-      <img src="cards/zutomayocard_1st_1.png" class="card" data-season="1" data-rarity="UR" />
-      <img src="cards/zutomayocard_1st_2.png" class="card" data-season="1" data-rarity="UR" />
-      <img src="cards/zutomayocard_1st_3.png" class="card" data-season="1" data-rarity="UR" />
-      <img src="cards/zutomayocard_1st_4.png" class="card" data-season="1" data-rarity="UR" />
+      <img src="cards/zutomayocard_1st_1.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
+      <img src="cards/zutomayocard_1st_2.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
+      <img src="cards/zutomayocard_1st_3.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
+      <img src="cards/zutomayocard_1st_4.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
+      <img src="cards/zutomayocard_1st_5.png" class="card" data-season="1" data-rarity="UR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_6.png" class="card" data-season="1" data-rarity="UR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_7.png" class="card" data-season="1" data-rarity="UR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_8.png" class="card" data-season="1" data-rarity="UR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_9.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
+      <img src="cards/zutomayocard_1st_10.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_11.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_12.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_13.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_14.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_15.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_16.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_17.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_18.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_19.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_20.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_21.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_22.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_23.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_24.png" class="card" data-season="1" data-rarity="SR" data-type="character" />
+      <img src="cards/zutomayocard_1st_25.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_26.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_27.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_28.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_29.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_30.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_31.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_32.png" class="card" data-season="1" data-rarity="SR" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_33.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_34.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_35.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_36.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_37.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_38.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_39.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_40.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_41.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_42.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_43.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_44.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_45.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_46.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_47.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_48.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_49.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_50.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_51.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_52.png" class="card" data-season="1" data-rarity="R" data-type="character" />
+      <img src="cards/zutomayocard_1st_53.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_54.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_55.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_56.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_57.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_58.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_59.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_60.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_61.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_62.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_63.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_64.png" class="card" data-season="1" data-rarity="R" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_65.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_66.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_67.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_68.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_69.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_70.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_71.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_72.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_73.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_74.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_75.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_76.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_77.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_78.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_79.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_80.png" class="card" data-season="1" data-rarity="N" data-type="character" />
+      <img src="cards/zutomayocard_1st_81.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_82.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_83.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_84.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_85.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_86.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_87.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_88.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_89.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_90.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_91.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_92.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_93.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_94.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_95.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_96.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_97.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_98.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_99.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_100.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_101.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_102.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_103.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_104.png" class="card" data-season="1" data-rarity="N" data-type="enchant"/>
+      <img src="cards/zutomayocard_1st_105.png" class="card" data-season="1" data-rarity="SE" data-type="character" />
+      <img src="cards/zutomayocard_1st_106.png" class="card" data-season="1" data-rarity="SE" data-type="character" />
+
+
+
+
+
+
+
+
+
+
+
     </main>
 
   </div>
@@ -57,21 +177,29 @@
 <script>
   let currentSeason = 'all';
   let currentRarity = 'all';
+  let currentType = 'all'; // character | enchant | all
 
-  function applyFilter() {
-    const cards = document.querySelectorAll('.card');
 
-    cards.forEach(card => {
-      const matchSeason =
-        currentSeason === 'all' || card.dataset.season === currentSeason;
+function applyFilter() {
+  const cards = document.querySelectorAll('.card');
 
-      const matchRarity =
-        currentRarity === 'all' || card.dataset.rarity === currentRarity;
+  cards.forEach(card => {
+    const matchSeason =
+      currentSeason === 'all' || card.dataset.season === currentSeason;
 
-      card.style.display =
-        matchSeason && matchRarity ? 'inline-block' : 'none';
-    });
-  }
+    const matchRarity =
+      currentRarity === 'all' || card.dataset.rarity === currentRarity;
+
+    const matchType =
+      currentType === 'all' || card.dataset.type === currentType;
+
+    card.style.display =
+      matchSeason && matchRarity && matchType
+        ? 'inline-block'
+        : 'none';
+  });
+}
+
 
   function clearActive(groupSelector) {
     document
@@ -99,11 +227,25 @@
     }
     applyFilter();
   }
+
+  function filterType(type, button) {
+  if (button.classList.contains('active')) {
+    button.classList.remove('active');
+    currentType = 'all';
+  } else {
+    clearActive('.sidebar .type-button');
+    button.classList.add('active');
+    currentType = type;
+  }
+  applyFilter();
+}
+
 </script>
 
 
   </body>
 </html>
+
 
 
 
