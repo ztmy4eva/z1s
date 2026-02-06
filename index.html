@@ -266,47 +266,34 @@ function applyFilter() {
 
     <div class="modal-info">
       <table>
-        <tr>
-          <th>이름</th>
-          <td id="info-name"></td>
-        </tr>
-        <tr>
-          <th>등급</th>
-          <td id="info-rarity"></td>
-        </tr>
-        <tr>
-          <th>종류</th>
-          <td id="info-type"></td>
-        </tr>
-        <tr>
-          <th>속성</th>
-          <td id="info-attribute"></td>
-        </tr>
-        <tr>
-          <th>크로노스</th>
-          <td id="info-chronos"></td>
-        </tr>
-        <tr>
-          <th>공격력</th>
-          <td id="info-power"></td>
-        </tr>
-        <tr>
-          <th>파워코스트</th>
-          <td id="info-powerCost"></td>
-        </tr>
-        <tr>
-          <th>센드 투 파워</th>
-          <td id="info-sendToPower"></td>
-        </tr>
-        <tr>
-          <th>효과</th>
-          <td id="info-effect"></td>
-        </tr>
+        <tr><th>이름</th><td id="info-name"></td></tr>
+        <tr><th>등급</th><td id="info-rarity"></td> </tr>
+        <tr><th>종류</th><td id="info-type"></td> </tr>
+        <tr><th>속성</th><td id="info-attribute"></td></tr>
+        <tr><th>크로노스</th><td id="info-chronos"></td></tr>
+        <tr><th>공격력</th><td id="info-power"></td></tr>
+        <tr><th>파워코스트</th><td id="info-powercost"></td></tr>
+        <tr><th>센드 투 파워</th><td id="info-sendtopower"></td></tr>
+        <tr><th>효과</th><td id="info-effect"></td></tr>
       </table>
     </div>
 
   </div>
 </div>
+
+  function setInfo(id, value) {
+  const cell = document.getElementById(id);
+  if (!cell) return;
+
+  const row = cell.closest('tr');
+
+  if (value) {
+    cell.textContent = value;
+    row.style.display = '';
+  } else {
+    row.style.display = 'none';
+  }
+}
 
   <script>
 function openModal(card) {
@@ -317,12 +304,10 @@ function openModal(card) {
   setInfo('info-rarity', card.dataset.rarity);
   setInfo('info-type', card.dataset.type);
   setInfo('info-attribute', card.dataset.attribute);
-
   setInfo('info-chronos', card.dataset.chronos);
   setInfo('info-power', card.dataset.power);
-  setInfo('info-powerCost', card.dataset.powerCost);
-  setInfo('info-sendToPower', card.dataset.sendToPower);
-
+  setInfo('info-powercost', card.dataset.powercost);
+  setInfo('info-sendtopower', card.dataset.sendtopower);
   setInfo('info-effect', card.dataset.effect);
 }
 
@@ -337,6 +322,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
