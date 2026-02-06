@@ -55,28 +55,32 @@
 
 
 <script>
-  function filterSeason(season) {
+  let currentSeason = 'all';
+  let currentRarity = 'all';
+
+  function applyFilter() {
     const cards = document.querySelectorAll('.card');
 
     cards.forEach(card => {
-      if (season === 'all' || card.dataset.season === season) {
-        card.style.display = 'inline-block';
-      } else {
-        card.style.display = 'none';
-      }
+      const matchSeason =
+        currentSeason === 'all' || card.dataset.season === currentSeason;
+
+      const matchRarity =
+        currentRarity === 'all' || card.dataset.rarity === currentRarity;
+
+      card.style.display =
+        matchSeason && matchRarity ? 'inline-block' : 'none';
     });
   }
 
-  function filterRarity(rarity) {
-    const cards = document.querySelectorAll('.card');
+  function filterSeason(season) {
+    currentSeason = season;
+    applyFilter();
+  }
 
-    cards.forEach(card => {
-      if (rarity === 'all' || card.dataset.rarity === rarity) {
-        card.style.display = 'inline-block';
-      } else {
-        card.style.display = 'none';
-      }
-    });
+  function filterRarity(rarity) {
+    currentRarity = rarity;
+    applyFilter();
   }
 </script>
   </body>
