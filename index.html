@@ -10,10 +10,10 @@
   <!-- 상단 바 -->
   <header class="top-bar">
     <div class="seasons">
-      <button>시즌1</button>
-      <button>시즌2</button>
-      <button>시즌3</button>
-      <button>시즌4</button>
+      <button onclick="filterSeason('1')">시즌1</button>
+      <button onclick="filterSeason('1')">시즌2</button>
+      <button onclick="filterSeason('1')">시즌3</button>
+      <button onclick="filterSeason('1')">시즌4</button>
     </div>
 
     <input type="text" placeholder="카드 검색" />
@@ -27,19 +27,19 @@
 
       <h4>캐릭터 카드</h4>
       <ul>
-        <li>UR</li>
-        <li>SR</li>
-        <li>R</li>
-        <li>N</li>
-        <li>SE</li>
+        <button onclick="filterRarity('UR')">UR</button>
+        <button onclick="filterRarity('UR')">SR</button>
+        <button onclick="filterRarity('UR')">R</button>
+        <button onclick="filterRarity('UR')">N</button>
+        <button onclick="filterRarity('UR')">SE</button>
       </ul>
 
       <h4>인챈트 카드</h4>
       <ul>
-        <li>UR</li>
-        <li>SR</li>
-        <li>R</li>
-        <li>N</li>
+        <button onclick="filterRarity('UR')">UR</button>
+        <button onclick="filterRarity('UR')">SR</button>
+        <button onclick="filterRarity('UR')">R</button>
+        <button onclick="filterRarity('UR')">N</button>
       </ul>
     </aside>
 
@@ -55,5 +55,31 @@
 
 </body>
 </html>
+<script>
+  function filterSeason(season) {
+    const cards = document.querySelectorAll('.card');
+
+    cards.forEach(card => {
+      if (season === 'all' || card.dataset.season === season) {
+        card.style.display = 'inline-block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function filterRarity(rarity) {
+    const cards = document.querySelectorAll('.card');
+
+    cards.forEach(card => {
+      if (rarity === 'all' || card.dataset.rarity === rarity) {
+        card.style.display = 'inline-block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+</script>
+
 
 
