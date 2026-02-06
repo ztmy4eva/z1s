@@ -1,0 +1,39 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ccc;
+}
+
+.seasons button {
+  margin-right: 5px;
+}
+
+.container {
+  display: flex;
+}
+
+.sidebar {
+  width: 200px;
+  padding: 15px;
+  border-right: 1px dashed #aaa;
+}
+
+.card-grid {
+  flex: 1;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 160px);
+  gap: 20px;
+}
+
+.card-grid img {
+  width: 160px;
+  cursor: pointer;
+}
