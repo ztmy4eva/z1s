@@ -61,7 +61,7 @@
        data-name="공부 니라"
        data-season="1"
        data-rarity="UR"
-       data-type-label="캐릭터 카드" 
+       data-typelabel="캐릭터 카드" 
        data-attribute="어둠" 
       
        data-chronos="5"
@@ -269,7 +269,7 @@ function applyFilter() {
       <table>
         <tr><th>이름</th><td id="info-name"></td></tr>
         <tr><th>등급</th><td id="info-rarity"></td> </tr>
-        <tr><th>종류</th><td id="info-type-label"></td> </tr>
+        <tr><th>종류</th><td id="info-typelabel"></td> </tr>
         <tr><th>속성</th><td id="info-attribute"></td></tr>
         <tr><th>크로노스</th><td id="info-chronos"></td></tr>
         <tr><th>공격력</th><td id="info-power"></td></tr>
@@ -304,7 +304,7 @@ function openModal(card) {
 
   setInfo('info-name', card.dataset.name);
   setInfo('info-rarity', card.dataset.rarity);
-  setInfo('info-type-label', card.dataset.type-label);
+  setInfo('info-typelabel', card.dataset.typelabel);
   setInfo('info-attribute', card.dataset.attribute);
   setInfo('info-chronos', card.dataset.chronos);
   setInfo('info-power', card.dataset.power);
@@ -324,6 +324,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
