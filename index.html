@@ -41,7 +41,7 @@
 
   <hr />
 
-  <h3>레어도</h3>
+  <h3>등급</h3>
   <button onclick="filterRarity('UR', this)">UR</button>
   <button onclick="filterRarity('SR', this)">SR</button>
   <button onclick="filterRarity('R', this)">R</button>
@@ -232,7 +232,7 @@ function applyFilter() {
     applyFilter();
   }
 
-  // ✅ 레어도: 토글
+  // ✅ 등급: 토글
   function filterRarity(rarity, button) {
     if (button.classList.contains('active')) {
       button.classList.remove('active');
@@ -304,7 +304,7 @@ function openModal(card) {
 
   setInfo('info-name', card.dataset.name);
   setInfo('info-rarity', card.dataset.rarity);
-  setInfo('info-type-label', card.dataset.type);
+  setInfo('info-type-label', card.dataset.type-label);
   setInfo('info-attribute', card.dataset.attribute);
   setInfo('info-chronos', card.dataset.chronos);
   setInfo('info-power', card.dataset.power);
@@ -324,6 +324,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
