@@ -10,10 +10,10 @@
   <!-- 상단 바 -->
   <header class="top-bar">
     <div class="seasons">
-      <button onclick="filterSeason('1')">시즌1</button>
-      <button onclick="filterSeason('2')">시즌2</button>
-      <button onclick="filterSeason('3')">시즌3</button>
-      <button onclick="filterSeason('4')">시즌4</button>
+      <button onclick="filterSeason('1', this)">시즌1</button>
+      <button onclick="filterSeason('2', this)">시즌2</button>
+      <button onclick="filterSeason('3', this)">시즌3</button>
+      <button onclick="filterSeason('4', this)">시즌4</button>
     </div>
 
     <input type="text" placeholder="카드 검색" />
@@ -27,19 +27,19 @@
 
       <h4>캐릭터 카드</h4>
       <ul>
-        <button onclick="filterRarity('UR')">UR</button>
-        <button onclick="filterRarity('SR')">SR</button>
-        <button onclick="filterRarity('R')">R</button>
-        <button onclick="filterRarity('N')">N</button>
-        <button onclick="filterRarity('SE')">SE</button>
+        <button onclick="filterRarity('UR', this)">UR</button>
+        <button onclick="filterRarity('SR', this)">SR</button>
+        <button onclick="filterRarity('R', this)">R</button>
+        <button onclick="filterRarity('N', this)">N</button>
+        <button onclick="filterRarity('SE', this)">SE</button>
       </ul>
 
       <h4>인챈트 카드</h4>
       <ul>
-        <button onclick="filterRarity('UR')">UR</button>
-        <button onclick="filterRarity('SR')">SR</button>
-        <button onclick="filterRarity('R')">R</button>
-        <button onclick="filterRarity('N')">N</button>
+        <button onclick="filterRarity('UR', this)">UR</button>
+        <button onclick="filterRarity('SR', this)">SR</button>
+        <button onclick="filterRarity('R', this)">R</button>
+        <button onclick="filterRarity('N', this)">N</button>
       </ul>
     </aside>
 
@@ -73,18 +73,28 @@
     });
   }
 
-  function filterSeason(season) {
+  function setActiveButton(button, groupSelector) {
+    const buttons = document.querySelectorAll(groupSelector);
+    buttons.forEach(btn => btn.classList.remove('active'));
+    button.classList.add('active');
+  }
+
+  function filterSeason(season, button) {
     currentSeason = season;
+    setActiveButton(button, '.seasons button');
     applyFilter();
   }
 
-  function filterRarity(rarity) {
+  function filterRarity(rarity, button) {
     currentRarity = rarity;
+    setActiveButton(button, '.sidebar button');
     applyFilter();
   }
 </script>
+
   </body>
 </html>
+
 
 
 
