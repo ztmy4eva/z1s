@@ -52,8 +52,23 @@
 
     <!-- 카드 영역 -->
     <main class="card-grid">
-      <img src="cards/zutomayocard_1st_1.png" class="card" data-name="공부 니라" data-rarity="UR" data-type="캐릭터" data-season="1" data-attribute="어둠" data-chronos="5" data-power="밤 : 130 / 낮 : 50" 
-        data-powercost="♦︎♦︎♦︎♦︎♦︎" data-sendtopower="♦︎ × 0" data-effect=" " onclick="openModal(this)" />
+      <img src="cards/zutomayocard_1st_1.png" 
+        class="card" 
+        data-season="1" 
+        onclick="openModal(this)"
+        
+        data-name="공부 니라" 
+        data-rarity="UR" 
+        data-type="캐릭터" 
+        data-season="1" 
+        data-attribute="어둠" 
+        
+        data-chronos="5" 
+        data-power="밤 : 130 / 낮 : 50" 
+        data-powercost="♦︎♦︎♦︎♦︎♦︎" 
+        data-sendtopower="♦︎ × 0" 
+        
+        data-effect=" " />
       <img src="cards/zutomayocard_1st_2.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
       <img src="cards/zutomayocard_1st_3.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
       <img src="cards/zutomayocard_1st_4.png" class="card" data-season="1" data-rarity="UR" data-type="character" />
@@ -293,6 +308,15 @@ function applyFilter() {
   </div>
 </div>
 
+function setInfo(id, value) {
+  const row = document.getElementById(id).closest('tr');
+  if (value) {
+    document.getElementById(id).textContent = value;
+    row.style.display = '';
+  } else {
+    row.style.display = 'none';
+  }
+}
 
 
   <script>
@@ -300,16 +324,19 @@ function openModal(card) {
   document.getElementById('cardModal').style.display = 'flex';
   document.getElementById('modalImage').src = card.src;
 
-  document.getElementById('info-name').textContent = card.dataset.type || '';
-  document.getElementById('info-rarity').textContent = card.dataset.type || '';
-  document.getElementById('info-type').textContent = card.dataset.season || '';
-  document.getElementById('info-attribute').textContent = card.dataset.rarity || '';
-  document.getElementById('info-chronos').textContent = card.dataset.cost || '';
-  document.getElementById('info-power').textContent = card.dataset.power || '';
-  document.getElementById('info-powercost').textContent = card.dataset.effect || '';
-  document.getElementById('info-sendtopower').textContent = card.dataset.power || '';
-  document.getElementById('info-effect').textContent = card.dataset.effect || '';
+  setInfo('info-name', card.dataset.name);
+  setInfo('info-rarity', card.dataset.rarity);
+  setInfo('info-type', card.dataset.type);
+  setInfo('info-attribute', card.dataset.attribute);
+
+  setInfo('info-chronos', card.dataset.chronos);
+  setInfo('info-power', card.dataset.power);
+  setInfo('info-powerCost', card.dataset.powerCost);
+  setInfo('info-sendToPower', card.dataset.sendToPower);
+
+  setInfo('info-effect', card.dataset.effect);
 }
+
 
 function closeModal(e) {
   if (e.target.id === 'cardModal') {
@@ -321,6 +348,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
