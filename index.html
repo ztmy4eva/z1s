@@ -11,9 +11,9 @@
   <header class="top-bar">
     <div class="seasons">
       <button onclick="filterSeason('1')">시즌1</button>
-      <button onclick="filterSeason('1')">시즌2</button>
-      <button onclick="filterSeason('1')">시즌3</button>
-      <button onclick="filterSeason('1')">시즌4</button>
+      <button onclick="filterSeason('2')">시즌2</button>
+      <button onclick="filterSeason('3')">시즌3</button>
+      <button onclick="filterSeason('4')">시즌4</button>
     </div>
 
     <input type="text" placeholder="카드 검색" />
@@ -28,18 +28,18 @@
       <h4>캐릭터 카드</h4>
       <ul>
         <button onclick="filterRarity('UR')">UR</button>
-        <button onclick="filterRarity('UR')">SR</button>
-        <button onclick="filterRarity('UR')">R</button>
-        <button onclick="filterRarity('UR')">N</button>
-        <button onclick="filterRarity('UR')">SE</button>
+        <button onclick="filterRarity('SR')">SR</button>
+        <button onclick="filterRarity('R')">R</button>
+        <button onclick="filterRarity('N')">N</button>
+        <button onclick="filterRarity('SE')">SE</button>
       </ul>
 
       <h4>인챈트 카드</h4>
       <ul>
         <button onclick="filterRarity('UR')">UR</button>
-        <button onclick="filterRarity('UR')">SR</button>
-        <button onclick="filterRarity('UR')">R</button>
-        <button onclick="filterRarity('UR')">N</button>
+        <button onclick="filterRarity('SR')">SR</button>
+        <button onclick="filterRarity('R')">R</button>
+        <button onclick="filterRarity('N')">N</button>
       </ul>
     </aside>
 
@@ -53,8 +53,7 @@
 
   </div>
 
-</body>
-</html>
+
 <script>
   function filterSeason(season) {
     const cards = document.querySelectorAll('.card');
@@ -80,6 +79,8 @@
     });
   }
 </script>
+  </body>
+</html>
 
 
 
