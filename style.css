@@ -37,3 +37,12 @@ body {
   width: 160px;
   cursor: pointer;
 }
+
+button {
+  cursor: pointer;
+}
+
+button.active {
+  background-color: #333;
+  color: white;
+}
