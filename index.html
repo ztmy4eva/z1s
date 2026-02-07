@@ -10,6 +10,7 @@
   <!-- 상단 바 -->
   <header class="top-bar">
     <div class="seasons">
+      <button onclick="showOverview(this)">개요</button>
       <button onclick="filterSeason('1', this)">시즌1</button>
       <button onclick="filterSeason('2', this)">시즌2</button>
       <button onclick="filterSeason('3', this)">시즌3</button>
@@ -6023,6 +6024,18 @@ function applyFilter() {
       .forEach(btn => btn.classList.remove('active'));
   }
 
+function showOverview(button) {
+  clearActive('.seasons button');
+  button.classList.add('active');
+
+  currentSeason = 'all';
+  currentRarity = 'all';
+  currentType = 'all';
+
+  applyFilter();
+}
+
+  
   // ✅ 시즌: 무조건 선택
   function filterSeason(season, button) {
     currentSeason = season;
@@ -6124,6 +6137,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
