@@ -6037,10 +6037,7 @@ function filterRarity(rarity, button) {
     button.classList.remove('active');
     currentRarity = 'all';
   } else {
-    button.parentElement
-      .querySelectorAll('button')
-      .forEach(b => b.classList.remove('active'));
-
+    clearActive('.sidebar button');
     button.classList.add('active');
     currentRarity = rarity;
   }
@@ -6052,15 +6049,13 @@ function filterType(type, button) {
     button.classList.remove('active');
     currentType = 'all';
   } else {
-    button.parentElement
-      .querySelectorAll('button')
-      .forEach(b => b.classList.remove('active'));
-
+    clearActive('.type button');
     button.classList.add('active');
     currentType = type;
   }
   applyFilter();
 }
+
 
 
 </script>
@@ -6130,6 +6125,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
