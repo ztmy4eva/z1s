@@ -6032,7 +6032,7 @@ function applyFilter() {
 function showOverview(button) {
   clearActive('.seasons button');
   button.classList.add('active');
-
+  clearActive('.sidebar button');
   // 개요 보이기
   document.getElementById('overview').style.display = 'flex';
   document.querySelector('.card-grid').style.display = 'none';
@@ -6153,29 +6153,6 @@ function closeModal(e) {
   
   </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
