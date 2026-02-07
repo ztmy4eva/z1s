@@ -6032,24 +6032,24 @@ function applyFilter() {
   }
 
   // ✅ 등급: 토글
-  function filterRarity(rarity, button) {
-    if (button.classList.contains('active')) {
-      button.classList.remove('active');
-      currentRarity = 'all';
-    } else {
-      clearActive('.sidebar button');
-      button.classList.add('active');
-      currentRarity = rarity;
-    }
-    applyFilter();
+function filterRarity(rarity, button) {
+  if (button.classList.contains('active')) {
+    button.classList.remove('active');
+    currentRarity = 'all';
+  } else {
+    clearActive('.sidebar button:not(.type-button)');
+    button.classList.add('active');
+    currentRarity = rarity;
   }
+  applyFilter();
+}
 
-  function filterType(type, button) {
+function filterType(type, button) {
   if (button.classList.contains('active')) {
     button.classList.remove('active');
     currentType = 'all';
   } else {
-    clearActive('.sidebar button');
+    clearActive('.sidebar .type-button');
     button.classList.add('active');
     currentType = type;
   }
@@ -6124,6 +6124,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
