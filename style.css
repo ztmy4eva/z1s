@@ -90,3 +90,20 @@ button.active {
   padding: 6px 10px;
   background: #fff;
 }
+
+
+
+#overview {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.overview-image {
+  max-width: 80%;
+  height: auto;
+}
+
+.card-grid {
+  display: none; 
+}
