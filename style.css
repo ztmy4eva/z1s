@@ -97,6 +97,11 @@ button.active {
   border-bottom: none;
 }
 
+.modal-info {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
 .card-table {
   border-collapse: collapse;
   min-width: 260px;
