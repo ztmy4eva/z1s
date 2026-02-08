@@ -143,3 +143,6 @@ button.active {
   text-align: center;
 }
 
+.sidebar.disabled {
+  pointer-events: none;
+}
