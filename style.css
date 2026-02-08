@@ -81,8 +81,10 @@ button.active {
   border-radius: 8px;
 }
 
+.modal-info th,
 .modal-info td {
   white-space: pre-line;
+  line-height: 1.6;
 }
 
 .card-table {
@@ -145,4 +147,8 @@ button.active {
 
 .sidebar.disabled {
   pointer-events: none;
+}
+
+#info-effect {
+  line-height: 1.8;
 }
