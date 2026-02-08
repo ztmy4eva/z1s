@@ -6035,6 +6035,8 @@ function showOverview(button) {
   document.getElementById('overview').style.display = 'flex';
   document.querySelector('.card-grid').style.display = 'none';
 
+  document.querySelector('.sidebar').classList.add('disabled');
+  
   // 필터 초기화
   currentSeason = 'all';
   currentRarity = 'all';
@@ -6050,7 +6052,8 @@ function showOverview(button) {
 
       document.getElementById('overview').style.display = 'none';
       document.querySelector('.card-grid').style.display = 'grid';
-    
+
+     document.querySelector('.sidebar').classList.remove('disabled');
     
     currentSeason = season;
     clearActive('.seasons button');
@@ -6151,6 +6154,7 @@ function closeModal(e) {
   
   </body>
 </html>
+
 
 
 
