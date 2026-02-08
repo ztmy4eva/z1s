@@ -89,6 +89,11 @@ button.active {
   vertical-align: top;
 }
 
+.modal-info tr:last-child th,
+.modal-info tr:last-child td {
+  border-bottom: none;
+}
+
 .card-table {
   border-collapse: collapse;
   min-width: 260px;
