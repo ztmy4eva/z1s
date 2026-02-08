@@ -84,7 +84,9 @@ button.active {
 .modal-info th,
 .modal-info td {
   white-space: pre-line;
-  line-height: 2.1;
+  padding: 10px 12px;
+  border-bottom: 1px dashed #ddd;
+  vertical-align: top;
 }
 
 .card-table {
