@@ -27,6 +27,7 @@
               <span id="importFeedback"></span>
             </div>
           </div>
+          <button class="code-btn print-btn" onclick="printCollection()">PDF 출력</button>
         </div>
       </div>
     </div>
@@ -291,20 +292,59 @@
     }
 
     // ── Encode / decode ─────────────────────────────────────
-    function encodeCollection() {
-      const bytes = new Uint8Array(Math.ceil(CARDS.length / 8));
-      CARDS.forEach((c, i) => {
-        if (ownedCards.has(c.src)) bytes[i >> 3] |= (1 << (i & 7));
-      });
-      return btoa(String.fromCharCode(...bytes));
+    // Format: 'i' + base64(2 bytes × index) when sparse (<27 owned)
+    //         'b' + base64(bitmask)          when dense  (≥27 owned)
+    // Crossover chosen so index mode is always shorter when it's used.
+    // Old 72-char codes (no prefix) are still accepted.
+
+    function b64(bytes) {
+      return btoa(String.fromCharCode(...bytes)).replace(/=+$/, '');
+    }
+    function unb64(str) {
+      const pad = (4 - str.length % 4) % 4;
+      return [...atob(str + '='.repeat(pad))].map(c => c.charCodeAt(0));
     }
 
-    function decodeCollection(code) {
-      const bytes = [...atob(code.trim())].map(c => c.charCodeAt(0));
+    function encodeCollection() {
+      const indices = [];
+      CARDS.forEach((c, i) => { if (ownedCards.has(c.src)) indices.push(i); });
+
+      if (indices.length < 27) {
+        // index mode — 2 bytes per card, much shorter for sparse collections
+        const bytes = new Uint8Array(indices.length * 2);
+        indices.forEach((idx, i) => {
+          bytes[i * 2]     = (idx >> 8) & 0xFF;
+          bytes[i * 2 + 1] =  idx       & 0xFF;
+        });
+        return 'i' + b64(bytes);
+      } else {
+        // bitmask mode
+        const bytes = new Uint8Array(Math.ceil(CARDS.length / 8));
+        CARDS.forEach((c, i) => {
+          if (ownedCards.has(c.src)) bytes[i >> 3] |= (1 << (i & 7));
+        });
+        return 'b' + b64(bytes);
+      }
+    }
+
+    function decodeCollection(raw) {
+      const code  = raw.trim();
+      const mode  = code[0];
       const owned = new Set();
-      CARDS.forEach((c, i) => {
-        if (bytes[i >> 3] & (1 << (i & 7))) owned.add(c.src);
-      });
+
+      if (mode === 'i') {
+        const bytes = unb64(code.slice(1));
+        for (let i = 0; i + 1 < bytes.length; i += 2) {
+          const idx = (bytes[i] << 8) | bytes[i + 1];
+          if (idx < CARDS.length) owned.add(CARDS[idx].src);
+        }
+      } else {
+        // 'b' prefix or legacy 72-char code (no prefix)
+        const bytes = unb64(mode === 'b' ? code.slice(1) : code);
+        CARDS.forEach((c, i) => {
+          if (bytes[i >> 3] & (1 << (i & 7))) owned.add(c.src);
+        });
+      }
       return owned;
     }
 
@@ -390,6 +430,97 @@
       const hash = location.hash;
       if (hash.startsWith('#c=')) enterSharedView(hash.slice(3));
     });
+
+    // ── Print / PDF ─────────────────────────────────────────
+    function printCollection() {
+      const totalAll   = CARDS.length;
+      const totalOwned = CARDS.filter(c => ownedCards.has(c.src)).length;
+      const date       = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+
+      const seasonBlocks = ['1','2','3','4'].map(s => {
+        const seasonCards = CARDS.filter(c => c.season === s);
+        const owned       = seasonCards.filter(c => ownedCards.has(c.src)).length;
+        const pct         = Math.round(owned / seasonCards.length * 100);
+        const barFill     = Math.round(pct * 0.8); // max 80 chars wide visually
+
+        const rows = [];
+        for (let i = 0; i < seasonCards.length; i += 3) {
+          const trio = seasonCards.slice(i, i + 3).map(c => {
+            const have = ownedCards.has(c.src);
+            return `<td class="${have ? 'have' : 'nope'}">
+              <span class="chk">${have ? '✓' : '○'}</span>
+              <span class="cname">${c.name}</span>
+              <span class="rarity">${c.rarity}</span>
+            </td>`;
+          });
+          while (trio.length < 3) trio.push('<td></td>');
+          rows.push(`<tr>${trio.join('')}</tr>`);
+        }
+
+        return `
+          <section class="season-block">
+            <div class="season-header">
+              <span class="season-title">시즌${s}</span>
+              <span class="season-count">${owned} / ${seasonCards.length} 보유 (${pct}%)</span>
+            </div>
+            <div class="prog-track"><div class="prog-track-fill" style="width:${pct}%"></div></div>
+            <table class="card-list">${rows.join('')}</table>
+          </section>`;
+      }).join('');
+
+      const html = `<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8"/>
+<title>ZUTOMAYO CARD 컬렉션</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; color: #111; background: #fff; padding: 32px; }
+
+  .report-header { text-align: center; margin-bottom: 36px; border-bottom: 2px solid #1a1a2e; padding-bottom: 20px; }
+  .report-title  { font-size: 26px; font-weight: 900; letter-spacing: 0.05em; color: #1a1a2e; }
+  .report-sub    { font-size: 13px; color: #888; margin-top: 6px; }
+  .report-total  { display: inline-block; margin-top: 14px; background: #1a1a2e; color: #e0e0ff;
+                   padding: 6px 20px; border-radius: 20px; font-size: 15px; font-weight: bold; }
+
+  .season-block  { margin-bottom: 32px; page-break-inside: avoid; }
+  .season-header { display: flex; justify-content: space-between; align-items: baseline;
+                   margin-bottom: 6px; }
+  .season-title  { font-size: 17px; font-weight: 800; color: #1a1a2e; }
+  .season-count  { font-size: 13px; color: #555; }
+
+  .prog-track      { height: 7px; background: #e8e8e8; border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
+  .prog-track-fill { height: 100%; background: #2e7d32; border-radius: 4px; }
+
+  .card-list { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .card-list td { padding: 5px 8px; border: 1px solid #eee; vertical-align: middle; width: 33.3%; }
+  .card-list td.have { background: #f1f8f1; }
+  .card-list td.nope { background: #fafafa; color: #bbb; }
+
+  .chk   { font-weight: bold; margin-right: 6px; color: #2e7d32; }
+  .nope .chk { color: #ccc; }
+  .cname { margin-right: 6px; }
+  .rarity { font-size: 10px; color: #999; }
+  .have .rarity { color: #555; }
+
+  @media print {
+    body { padding: 16px; }
+    .season-block { page-break-inside: avoid; }
+  }
+</style>
+</head><body>
+  <div class="report-header">
+    <div class="report-title">ZUTOMAYO CARD 컬렉션</div>
+    <div class="report-sub">${date}</div>
+    <div class="report-total">전체 ${totalOwned} / ${totalAll} 보유 (${Math.round(totalOwned/totalAll*100)}%)</div>
+  </div>
+  ${seasonBlocks}
+  <script>window.onload = () => { window.print(); }<\/script>
+</body></html>`;
+
+      const w = window.open('', '_blank');
+      w.document.write(html);
+      w.document.close();
+    }
 
     // ── Modal ───────────────────────────────────────────────
     function openModal(c) {

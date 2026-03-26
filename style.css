@@ -337,6 +337,15 @@ button.active {
   background: #3a3a6e !important;
 }
 
+.print-btn {
+  background: #fff;
+  border-color: #999;
+}
+
+.print-btn:hover {
+  background: #f0f0f0;
+}
+
 #codeInput {
   font-family: monospace;
   font-size: 13px;
