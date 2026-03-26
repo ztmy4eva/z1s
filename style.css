@@ -3,61 +3,349 @@ body {
   font-family: sans-serif;
 }
 
+/* ── Top bar ────────────────────────────────────────────── */
 .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
   border-bottom: 1px solid #ccc;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.seasons button {
-  margin-right: 5px;
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
+.top-left button,
+.top-right button {
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.top-right {
+  display: flex;
+  gap: 6px;
+}
+
+/* Collection top bar (progress + code, inline with left nav) */
+#collTopBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-left: 1px solid #ddd;
+  padding-left: 16px;
+  margin-left: 4px;
+}
+
+.collection-tab {
+  margin-left: 12px;
+  background: #1a1a2e;
+  color: #e0e0ff;
+  border: none !important;
+}
+
+.collection-tab.active,
+.collection-tab:hover {
+  background: #3a3a6e !important;
+  color: #fff !important;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
 .container {
   display: flex;
 }
 
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
 .sidebar {
   width: 200px;
+  flex-shrink: 0;
   padding: 15px;
   border-right: 1px dashed #aaa;
 }
 
-.card-grid {
-  flex: 1;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 160px);
-  gap: 20px;
-}
-
-.card-grid img {
-  width: 160px;
+.sidebar button {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid #999;
+  background: #f8f8f8;
+  border-radius: 6px;
   cursor: pointer;
+  text-align: center;
 }
 
+.sidebar.disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
 button {
   cursor: pointer;
 }
 
-.top-bar button {
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 8px;
+button.active {
+  background-color: #333 !important;
+  color: white !important;
 }
 
-.sidebar button {
+/* ── Overview ────────────────────────────────────────────── */
+#overview {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.overview-image {
+  max-width: 80%;
+  height: auto;
+}
+
+/* ── Card grid ───────────────────────────────────────────── */
+.card-grid {
+  display: none;
+  padding: 20px;
+  grid-template-columns: repeat(auto-fill, 160px);
+  gap: 20px;
+}
+
+/* ── Card wrap ───────────────────────────────────────────── */
+.card-wrap {
+  position: relative;
+  width: 160px;
+  cursor: pointer;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: transform 0.15s;
+}
+
+.card-wrap:hover {
+  transform: scale(1.04);
+}
+
+.card-wrap img {
+  width: 160px;
+  display: block;
+}
+
+/* Unowned: greyed out in browse AND collection */
+.card-wrap.unowned img {
+  filter: grayscale(100%) opacity(0.35);
+}
+
+/* In browse mode, hovering unowned shows it clearly */
+.card-grid .card-wrap.unowned:hover img {
+  filter: grayscale(60%) opacity(0.6);
+}
+
+/* ── Owned checkmark badge ───────────────────────────────── */
+.owned-mark {
+  display: none;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #2e7d32;
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  line-height: 24px;
+  text-align: center;
+  font-weight: bold;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+.card-wrap.owned .owned-mark {
+  display: block;
+}
+
+/* In collection view, unowned shows a + hint on hover */
+#collectionHeader ~ .card-grid .card-wrap.unowned:hover::after {
+  content: '+';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #555;
+  color: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  line-height: 24px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* ── Collection season picker (sidebar) ─────────────────── */
+.coll-season-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 10px;
   border: 1px solid #999;
   background: #f8f8f8;
   border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
 }
 
-button.active {
-  background-color: #333;
-  color: white;
+/* ── Collection progress (top bar, compact) ─────────────── */
+.collection-progress {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
+
+.prog-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 72px;
+}
+
+.prog-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #555;
+}
+
+.prog-bar {
+  height: 5px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background: #2e7d32;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.prog-count {
+  font-size: 11px;
+  color: #888;
+}
+
+
+/* ── Save code bar ───────────────────────────────────────── */
+.save-code-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.import-wrap {
+  position: relative;
+}
+
+#importArea {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.code-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #999;
+  background: #f8f8f8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.code-btn:hover {
+  background: #e8e8e8;
+}
+
+.apply-btn {
+  background: #1a1a2e;
+  color: #e0e0ff;
+  border-color: #1a1a2e;
+}
+
+.apply-btn:hover {
+  background: #3a3a6e !important;
+}
+
+#codeInput {
+  font-family: monospace;
+  font-size: 13px;
+  padding: 6px 10px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  width: 320px;
+  max-width: 100%;
+}
+
+#codeInput:focus {
+  outline: none;
+  border-color: #1a1a2e;
+}
+
+.feedback-ok {
+  font-size: 13px;
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+.feedback-err {
+  font-size: 13px;
+  color: #c62828;
+}
+
+.collection-season-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.collection-season-tabs button {
+  padding: 7px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #999;
+  background: #f8f8f8;
+  cursor: pointer;
+}
+
+.collection-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* ── Modal ───────────────────────────────────────────────── */
 .modal {
   display: none;
   position: fixed;
@@ -78,23 +366,10 @@ button.active {
 
 .modal-content img {
   width: 300px;
-  height: 420px;  
+  height: 420px;
   object-fit: contain;
   border-radius: 8px;
-  flex-shrink: 0;  
-}
-
-.modal-info th,
-.modal-info td {
-  white-space: pre-line;
-  padding: 10px 12px;
-  border-bottom: 1px dashed #ddd;
-  vertical-align: top;
-}
-
-.modal-info tr:last-child th,
-.modal-info tr:last-child td {
-  border-bottom: none;
+  flex-shrink: 0;
 }
 
 .modal-info {
@@ -113,55 +388,16 @@ button.active {
   padding: 6px 10px;
   background: #f2f2f2;
   width: 80px;
+  white-space: pre-line;
+  vertical-align: top;
 }
 
 .card-table td {
   padding: 6px 10px;
   background: #fff;
-}
-
-
-
-#overview {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
-}
-
-.overview-image {
-  max-width: 80%;
-  height: auto;
-}
-
-.card-grid {
-  display: none; 
-}
-
-
-/* 카드 종류 버튼 묶음 */
-.type-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-/* 등급 버튼 묶음 */
-.rarity-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* 등급 버튼 크기 통일 */
-.rarity-buttons button {
-  width: 100%;
-  height: 42px;
-  text-align: center;
-}
-
-.sidebar.disabled {
-  pointer-events: none;
+  white-space: pre-line;
+  vertical-align: top;
+  border-bottom: 1px dashed #ddd;
 }
 
 #info-effect {

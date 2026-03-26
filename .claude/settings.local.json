@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node extract_cards.js)",
+      "Bash(python extract_cards.py)"
+    ]
+  }
+}
