@@ -11,11 +11,13 @@
     <div class="top-left">
       <button onclick="showOverview(this)" class="active">개요</button>
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
+      <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
       <!-- Progress + save code (collection mode only) -->
       <div id="collTopBar" style="display:none">
         <div class="collection-progress" id="collectionProgress"></div>
         <div class="save-code-bar">
           <button class="code-btn" onclick="copyCode()">코드 복사</button>
+          <button class="code-btn" onclick="shareLink()">링크 복사</button>
           <span id="copyFeedback"></span>
           <div class="import-wrap">
             <button class="code-btn" onclick="toggleImport()">코드 입력</button>
@@ -35,6 +37,15 @@
       <button onclick="showSeason('4', this)">시즌4</button>
     </div>
   </header>
+
+  <!-- Shared collection banner -->
+  <div id="sharedBanner" style="display:none">
+    <span class="shared-label">공유된 컬렉션을 보는 중입니다 (읽기 전용)</span>
+    <div class="shared-actions">
+      <button class="code-btn apply-btn" onclick="importShared()">내 컬렉션으로 가져오기</button>
+      <button class="code-btn" onclick="exitSharedView()">내 컬렉션으로 돌아가기</button>
+    </div>
+  </div>
 
   <div class="container">
 
@@ -97,6 +108,8 @@
     let currentRarity    = 'all';
     let currentType      = 'all';
     let currentOwnership = 'all';
+    let isSharedView     = false;
+    let savedOwnedCards  = null; // preserves own collection while viewing shared
 
     let ownedCards = new Set(JSON.parse(localStorage.getItem('zc_owned') || '[]'));
 
@@ -135,7 +148,8 @@
         img.className = 'card';
         wrap.appendChild(img);
 
-        if (isCollView) {
+        if (isCollView && !isSharedView) {
+          // own collection: click to toggle
           const mark = document.createElement('span');
           mark.className = 'owned-mark';
           mark.textContent = '✓';
@@ -147,6 +161,13 @@
             wrap.classList.toggle('unowned', !now);
             updateProgress();
           };
+        } else if (isCollView && isSharedView) {
+          // shared view: click opens modal (read-only)
+          const mark = document.createElement('span');
+          mark.className = 'owned-mark';
+          mark.textContent = '✓';
+          wrap.appendChild(mark);
+          wrap.onclick = () => openModal(c);
         } else {
           wrap.onclick = () => openModal(c);
         }
@@ -269,7 +290,7 @@
       renderCards();
     }
 
-    // ── Save code ───────────────────────────────────────────
+    // ── Encode / decode ─────────────────────────────────────
     function encodeCollection() {
       const bytes = new Uint8Array(Math.ceil(CARDS.length / 8));
       CARDS.forEach((c, i) => {
@@ -287,13 +308,23 @@
       return owned;
     }
 
+    // ── Save code buttons ───────────────────────────────────
+    function showFeedback(id, text, cls) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = cls;
+      setTimeout(() => { el.textContent = ''; el.className = ''; }, 2000);
+    }
+
     function copyCode() {
-      navigator.clipboard.writeText(encodeCollection()).then(() => {
-        const fb = document.getElementById('copyFeedback');
-        fb.textContent = '복사됨! ✓';
-        fb.className = 'feedback-ok';
-        setTimeout(() => { fb.textContent = ''; fb.className = ''; }, 2000);
-      });
+      navigator.clipboard.writeText(encodeCollection())
+        .then(() => showFeedback('copyFeedback', '코드 복사됨! ✓', 'feedback-ok'));
+    }
+
+    function shareLink() {
+      const url = location.href.split('#')[0] + '#c=' + encodeCollection();
+      navigator.clipboard.writeText(url)
+        .then(() => showFeedback('copyFeedback', '링크 복사됨! ✓', 'feedback-ok'));
     }
 
     function toggleImport() {
@@ -305,7 +336,6 @@
 
     function applyCode() {
       const input = document.getElementById('codeInput');
-      const fb    = document.getElementById('importFeedback');
       try {
         ownedCards = decodeCollection(input.value);
         saveOwned();
@@ -314,16 +344,51 @@
         buildProgress();
         renderCards();
       } catch (e) {
-        fb.textContent = '잘못된 코드';
-        fb.className = 'feedback-err';
-        setTimeout(() => { fb.textContent = ''; fb.className = ''; }, 2500);
+        showFeedback('importFeedback', '잘못된 코드', 'feedback-err');
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // ── Shared view ─────────────────────────────────────────
+    function enterSharedView(code) {
+      try {
+        savedOwnedCards = new Set(ownedCards);
+        ownedCards = decodeCollection(code);
+        isSharedView = true;
+        document.getElementById('sharedBanner').style.display = 'flex';
+        showCollection(document.querySelector('.collection-tab'));
+      } catch (e) {
+        history.replaceState(null, '', location.pathname);
+      }
+    }
+
+    function importShared() {
+      // keep shared collection as own
+      saveOwned();
+      savedOwnedCards = null;
+      isSharedView = false;
+      document.getElementById('sharedBanner').style.display = 'none';
+      history.replaceState(null, '', location.pathname);
+      buildProgress();
+      renderCards();
+    }
+
+    function exitSharedView() {
+      ownedCards = savedOwnedCards;
+      savedOwnedCards = null;
+      isSharedView = false;
+      document.getElementById('sharedBanner').style.display = 'none';
+      history.replaceState(null, '', location.pathname);
+      buildProgress();
+      renderCards();
+    }
+
+    // ── On load: check for shared link ──────────────────────
+    window.addEventListener('load', () => {
       document.getElementById('codeInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') applyCode();
       });
+      const hash = location.hash;
+      if (hash.startsWith('#c=')) enterSharedView(hash.slice(3));
     });
 
     // ── Modal ───────────────────────────────────────────────

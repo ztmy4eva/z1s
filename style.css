@@ -58,6 +58,45 @@ body {
   color: #fff !important;
 }
 
+.buy-btn {
+  display: inline-block;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  background: #b71c1c;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.buy-btn:hover {
+  background: #d32f2f;
+}
+
+/* ── Shared collection banner ────────────────────────────── */
+#sharedBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 24px;
+  background: #1a1a2e;
+  color: #e0e0ff;
+  font-size: 14px;
+}
+
+.shared-label {
+  font-weight: bold;
+  letter-spacing: 0.02em;
+}
+
+.shared-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* ── Layout ─────────────────────────────────────────────── */
 .container {
   display: flex;
