@@ -29,10 +29,6 @@ body {
   cursor: pointer;
 }
 
-.top-right {
-  display: flex;
-  gap: 6px;
-}
 
 /* Collection top bar (progress + code, inline with left nav) */
 #collTopBar {

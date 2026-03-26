@@ -10,6 +10,10 @@
   <header class="top-bar">
     <div class="top-left">
       <button onclick="showOverview(this)" class="active">개요</button>
+      <button onclick="showSeason('1', this)">시즌1</button>
+      <button onclick="showSeason('2', this)">시즌2</button>
+      <button onclick="showSeason('3', this)">시즌3</button>
+      <button onclick="showSeason('4', this)">시즌4</button>
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
       <!-- Progress + save code (collection mode only) -->
@@ -30,12 +34,6 @@
           <button class="code-btn print-btn" onclick="printCollection()">PDF 출력</button>
         </div>
       </div>
-    </div>
-    <div class="top-right">
-      <button onclick="showSeason('1', this)">시즌1</button>
-      <button onclick="showSeason('2', this)">시즌2</button>
-      <button onclick="showSeason('3', this)">시즌3</button>
-      <button onclick="showSeason('4', this)">시즌4</button>
     </div>
   </header>
 
@@ -214,7 +212,6 @@
     function showOverview(btn) {
       viewMode = 'overview';
       clearActive('.top-left button');
-      clearActive('.top-right button');
       btn.classList.add('active');
       clearActive('.sidebar button');
       overview.style.display = 'flex';
@@ -229,7 +226,6 @@
     function showSeason(season, btn) {
       viewMode = 'browse';
       clearActive('.top-left button');
-      clearActive('.top-right button');
       btn.classList.add('active');
       overview.style.display = 'none';
       grid.style.display     = 'grid';
@@ -244,7 +240,6 @@
     function showCollection(btn) {
       viewMode = 'collection';
       clearActive('.top-left button');
-      clearActive('.top-right button');
       btn.classList.add('active');
       clearActive('.sidebar .rarity-btn');
       clearActive('.sidebar .type-btn');
