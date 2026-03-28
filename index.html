@@ -428,88 +428,139 @@
 
     // ── Print / PDF ─────────────────────────────────────────
     function printCollection() {
+      const baseUrl    = location.href.split('#')[0].replace(/\/[^/]*$/, '/');
       const totalAll   = CARDS.length;
       const totalOwned = CARDS.filter(c => ownedCards.has(c.src)).length;
+      const totalPct   = Math.round(totalOwned / totalAll * 100);
       const date       = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+
+      const rarityColor = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#555', SE:'#ad1457' };
 
       const seasonBlocks = ['1','2','3','4'].map(s => {
         const seasonCards = CARDS.filter(c => c.season === s);
-        const owned       = seasonCards.filter(c => ownedCards.has(c.src)).length;
-        const pct         = Math.round(owned / seasonCards.length * 100);
-        const barFill     = Math.round(pct * 0.8); // max 80 chars wide visually
+        const ownedN      = seasonCards.filter(c => ownedCards.has(c.src)).length;
+        const pct         = Math.round(ownedN / seasonCards.length * 100);
 
-        const rows = [];
-        for (let i = 0; i < seasonCards.length; i += 3) {
-          const trio = seasonCards.slice(i, i + 3).map(c => {
-            const have = ownedCards.has(c.src);
-            return `<td class="${have ? 'have' : 'nope'}">
-              <span class="chk">${have ? '✓' : '○'}</span>
-              <span class="cname">${c.name}</span>
-              <span class="rarity">${c.rarity}</span>
-            </td>`;
-          });
-          while (trio.length < 3) trio.push('<td></td>');
-          rows.push(`<tr>${trio.join('')}</tr>`);
-        }
+        const slots = seasonCards.map(c => {
+          const have  = ownedCards.has(c.src);
+          const color = rarityColor[c.rarity] || '#555';
+          return `
+            <div class="slot ${have ? 'have' : 'miss'}">
+              <div class="img-wrap">
+                <img src="${baseUrl}${c.src}" />
+                ${have ? '<div class="check">✓</div>' : ''}
+              </div>
+              <div class="label">
+                <span class="rbadge" style="color:${color}">${c.rarity}</span>
+                <span class="kname">${c.name}</span>
+              </div>
+            </div>`;
+        }).join('');
 
         return `
           <section class="season-block">
             <div class="season-header">
               <span class="season-title">시즌${s}</span>
-              <span class="season-count">${owned} / ${seasonCards.length} 보유 (${pct}%)</span>
+              <span class="season-stat">${ownedN} / ${seasonCards.length} 보유 &nbsp;·&nbsp; ${pct}%</span>
             </div>
-            <div class="prog-track"><div class="prog-track-fill" style="width:${pct}%"></div></div>
-            <table class="card-list">${rows.join('')}</table>
+            <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+            <div class="card-grid">${slots}</div>
           </section>`;
       }).join('');
 
       const html = `<!DOCTYPE html>
 <html lang="ko"><head>
 <meta charset="UTF-8"/>
-<title>ZUTOMAYO CARD 컬렉션</title>
+<base href="${baseUrl}"/>
+<title>ズトマヨカード コレクション</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; color: #111; background: #fff; padding: 32px; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Sans', 'Noto Sans JP', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    color: #111; background: #fff; padding: 28px 32px;
+  }
 
-  .report-header { text-align: center; margin-bottom: 36px; border-bottom: 2px solid #1a1a2e; padding-bottom: 20px; }
-  .report-title  { font-size: 26px; font-weight: 900; letter-spacing: 0.05em; color: #1a1a2e; }
-  .report-sub    { font-size: 13px; color: #888; margin-top: 6px; }
-  .report-total  { display: inline-block; margin-top: 14px; background: #1a1a2e; color: #e0e0ff;
-                   padding: 6px 20px; border-radius: 20px; font-size: 15px; font-weight: bold; }
+  /* ── Header ── */
+  .report-header {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid #1a1a2e; padding-bottom: 16px; margin-bottom: 28px;
+  }
+  .header-titles { line-height: 1.3; }
+  .title-jp  { font-size: 22px; font-weight: 900; color: #1a1a2e; letter-spacing: 0.06em; }
+  .title-kr  { font-size: 13px; color: #888; margin-top: 2px; }
+  .header-right { text-align: right; }
+  .total-pill {
+    display: inline-block; background: #1a1a2e; color: #e0e0ff;
+    padding: 5px 18px; border-radius: 20px; font-size: 14px; font-weight: bold;
+  }
+  .report-date { font-size: 11px; color: #aaa; margin-top: 5px; }
 
-  .season-block  { margin-bottom: 32px; page-break-inside: avoid; }
-  .season-header { display: flex; justify-content: space-between; align-items: baseline;
-                   margin-bottom: 6px; }
-  .season-title  { font-size: 17px; font-weight: 800; color: #1a1a2e; }
-  .season-count  { font-size: 13px; color: #555; }
+  /* ── Season block ── */
+  .season-block { margin-bottom: 30px; }
+  .season-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .season-title { font-size: 15px; font-weight: 800; color: #1a1a2e; }
+  .season-stat  { font-size: 12px; color: #666; }
 
-  .prog-track      { height: 7px; background: #e8e8e8; border-radius: 4px; margin-bottom: 14px; overflow: hidden; }
-  .prog-track-fill { height: 100%; background: #2e7d32; border-radius: 4px; }
+  .prog-track { height: 6px; background: #e8e8e8; border-radius: 3px; margin-bottom: 12px; overflow: hidden; }
+  .prog-fill  { height: 100%; background: #2e7d32; border-radius: 3px; }
 
-  .card-list { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .card-list td { padding: 5px 8px; border: 1px solid #eee; vertical-align: middle; width: 33.3%; }
-  .card-list td.have { background: #f1f8f1; }
-  .card-list td.nope { background: #fafafa; color: #bbb; }
+  /* ── Card grid ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+  }
 
-  .chk   { font-weight: bold; margin-right: 6px; color: #2e7d32; }
-  .nope .chk { color: #ccc; }
-  .cname { margin-right: 6px; }
-  .rarity { font-size: 10px; color: #999; }
-  .have .rarity { color: #555; }
+  .slot { display: flex; flex-direction: column; gap: 3px; }
 
+  .img-wrap {
+    position: relative;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+  }
+  .img-wrap img { width: 100%; display: block; }
+
+  .slot.miss .img-wrap img { filter: grayscale(100%) opacity(0.3); }
+  .slot.have .img-wrap { border-color: #2e7d32; box-shadow: 0 0 0 1px #2e7d32; }
+
+  .check {
+    position: absolute; bottom: 3px; right: 3px;
+    background: #2e7d32; color: #fff;
+    border-radius: 50%; width: 14px; height: 14px;
+    font-size: 9px; line-height: 14px; text-align: center; font-weight: bold;
+  }
+
+  .label { display: flex; align-items: center; gap: 3px; font-size: 8px; line-height: 1.2; }
+  .rbadge { font-weight: 800; flex-shrink: 0; }
+  .kname  { color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .slot.miss .kname { color: #bbb; }
+
+  /* ── Print rules ── */
   @media print {
-    body { padding: 16px; }
-    .season-block { page-break-inside: avoid; }
+    body { padding: 12px 16px; }
+    .season-block { page-break-inside: avoid; break-inside: avoid; }
   }
 </style>
 </head><body>
+
   <div class="report-header">
-    <div class="report-title">ZUTOMAYO CARD 컬렉션</div>
-    <div class="report-sub">${date}</div>
-    <div class="report-total">전체 ${totalOwned} / ${totalAll} 보유 (${Math.round(totalOwned/totalAll*100)}%)</div>
+    <div class="header-titles">
+      <div class="title-jp">ズトマヨカード コレクション</div>
+      <div class="title-kr">ZUTOMAYO CARD · 한글 번역 컬렉션</div>
+    </div>
+    <div class="header-right">
+      <div class="total-pill">전체 ${totalOwned} / ${totalAll} 보유 (${totalPct}%)</div>
+      <div class="report-date">${date}</div>
+    </div>
   </div>
+
   ${seasonBlocks}
-  <script>window.onload = () => { window.print(); }<\/script>
+
+  <script>window.onload = () => window.print();<\/script>
 </body></html>`;
 
       const w = window.open('', '_blank');
