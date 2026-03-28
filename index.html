@@ -458,14 +458,30 @@
         }).join('');
 
         return `
-          <section class="season-block">
+          <section class="card-page">
             <div class="season-header">
-              <span class="season-title">시즌${s}</span>
+              <span class="season-title">시즌 ${s}</span>
               <span class="season-stat">${ownedN} / ${seasonCards.length} 보유 &nbsp;·&nbsp; ${pct}%</span>
             </div>
             <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
             <div class="card-grid">${slots}</div>
           </section>`;
+      }).join('');
+
+      // summary cover page
+      const summaryRows = ['1','2','3','4'].map(s => {
+        const sc    = CARDS.filter(c => c.season === s);
+        const own   = sc.filter(c => ownedCards.has(c.src)).length;
+        const pct   = Math.round(own / sc.length * 100);
+        return `
+          <div class="sum-row">
+            <span class="sum-label">시즌 ${s}</span>
+            <div class="sum-bar-wrap">
+              <div class="sum-bar-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="sum-count">${own} <span class="sum-total">/ ${sc.length}</span></span>
+            <span class="sum-pct">${pct}%</span>
+          </div>`;
       }).join('');
 
       const html = `<!DOCTYPE html>
@@ -477,85 +493,110 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Hiragino Sans', 'Noto Sans JP', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-    color: #111; background: #fff; padding: 28px 32px;
+    color: #111; background: #fff;
   }
 
-  /* ── Header ── */
-  .report-header {
-    display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 3px solid #1a1a2e; padding-bottom: 16px; margin-bottom: 28px;
+  /* ── Cover page ── */
+  .cover {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px 80px;
+    page-break-after: always; break-after: page;
   }
-  .header-titles { line-height: 1.3; }
-  .title-jp  { font-size: 22px; font-weight: 900; color: #1a1a2e; letter-spacing: 0.06em; }
-  .title-kr  { font-size: 13px; color: #888; margin-top: 2px; }
-  .header-right { text-align: right; }
-  .total-pill {
-    display: inline-block; background: #1a1a2e; color: #e0e0ff;
-    padding: 5px 18px; border-radius: 20px; font-size: 14px; font-weight: bold;
-  }
-  .report-date { font-size: 11px; color: #aaa; margin-top: 5px; }
+  .cover-top { text-align: center; margin-bottom: 56px; }
+  .title-jp  { font-size: 38px; font-weight: 900; color: #1a1a2e; letter-spacing: 0.08em; }
+  .title-kr  { font-size: 16px; color: #888; margin-top: 8px; letter-spacing: 0.04em; }
+  .cover-date { font-size: 13px; color: #bbb; margin-top: 10px; }
 
-  /* ── Season block ── */
-  .season-block { margin-bottom: 30px; }
+  .total-block { margin-bottom: 52px; text-align: center; }
+  .total-num  { font-size: 64px; font-weight: 900; color: #1a1a2e; line-height: 1; }
+  .total-denom{ font-size: 28px; color: #aaa; font-weight: 400; }
+  .total-label{ font-size: 14px; color: #888; margin-top: 6px; letter-spacing: 0.05em; }
+  .total-pct  { display: inline-block; margin-top: 12px; background: #1a1a2e; color: #e0e0ff;
+                padding: 6px 24px; border-radius: 20px; font-size: 18px; font-weight: bold; }
+
+  .sum-section { width: 100%; max-width: 520px; }
+  .sum-row {
+    display: grid; grid-template-columns: 56px 1fr 70px 42px;
+    align-items: center; gap: 12px; margin-bottom: 18px;
+  }
+  .sum-label { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .sum-bar-wrap { height: 12px; background: #eee; border-radius: 6px; overflow: hidden; }
+  .sum-bar-fill { height: 100%; background: #2e7d32; border-radius: 6px; }
+  .sum-count { font-size: 15px; font-weight: 700; text-align: right; }
+  .sum-total { font-weight: 400; color: #aaa; font-size: 12px; }
+  .sum-pct   { font-size: 13px; color: #888; }
+
+  /* ── Card pages ── */
+  .card-page { padding: 20px 24px; page-break-after: always; break-after: page; }
+  .card-page:last-child { page-break-after: auto; break-after: auto; }
+
   .season-header {
     display: flex; align-items: baseline; justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 8px; padding-bottom: 8px; border-bottom: 2px solid #1a1a2e;
   }
-  .season-title { font-size: 15px; font-weight: 800; color: #1a1a2e; }
-  .season-stat  { font-size: 12px; color: #666; }
+  .season-title { font-size: 18px; font-weight: 900; color: #1a1a2e; }
+  .season-stat  { font-size: 13px; color: #666; }
 
-  .prog-track { height: 6px; background: #e8e8e8; border-radius: 3px; margin-bottom: 12px; overflow: hidden; }
+  .prog-track { height: 6px; background: #e8e8e8; border-radius: 3px; margin-bottom: 14px; overflow: hidden; }
   .prog-fill  { height: 100%; background: #2e7d32; border-radius: 3px; }
 
   /* ── Card grid ── */
   .card-grid {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    gap: 5px;
+    gap: 5px 5px;
   }
 
   .slot { display: flex; flex-direction: column; gap: 3px; }
 
   .img-wrap {
     position: relative;
+    aspect-ratio: 63 / 88;
     border-radius: 3px;
     overflow: hidden;
-    border: 1px solid #e0e0e0;
+    border: 1.5px solid #e0e0e0;
+    background: #f5f5f5;
   }
-  .img-wrap img { width: 100%; display: block; }
+  .img-wrap img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 
-  .slot.miss .img-wrap img { filter: grayscale(100%) opacity(0.3); }
+  .slot.miss .img-wrap img { filter: grayscale(100%) opacity(0.28); }
   .slot.have .img-wrap { border-color: #2e7d32; box-shadow: 0 0 0 1px #2e7d32; }
 
   .check {
-    position: absolute; bottom: 3px; right: 3px;
+    position: absolute; bottom: 2px; right: 2px;
     background: #2e7d32; color: #fff;
-    border-radius: 50%; width: 14px; height: 14px;
-    font-size: 9px; line-height: 14px; text-align: center; font-weight: bold;
+    border-radius: 50%; width: 13px; height: 13px;
+    font-size: 8px; line-height: 13px; text-align: center; font-weight: bold;
   }
 
-  .label { display: flex; align-items: center; gap: 3px; font-size: 8px; line-height: 1.2; }
-  .rbadge { font-weight: 800; flex-shrink: 0; }
-  .kname  { color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .label { display: flex; align-items: center; gap: 2px; font-size: 7.5px; line-height: 1.2; overflow: hidden; }
+  .rbadge { font-weight: 900; flex-shrink: 0; }
+  .kname  { color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .slot.miss .kname { color: #bbb; }
-
-  /* ── Print rules ── */
-  @media print {
-    body { padding: 12px 16px; }
-    .season-block { page-break-inside: avoid; break-inside: avoid; }
-  }
 </style>
 </head><body>
 
-  <div class="report-header">
-    <div class="header-titles">
+  <!-- Cover / summary page -->
+  <div class="cover">
+    <div class="cover-top">
       <div class="title-jp">ズトマヨカード コレクション</div>
       <div class="title-kr">ZUTOMAYO CARD · 한글 번역 컬렉션</div>
+      <div class="cover-date">${date}</div>
     </div>
-    <div class="header-right">
-      <div class="total-pill">전체 ${totalOwned} / ${totalAll} 보유 (${totalPct}%)</div>
-      <div class="report-date">${date}</div>
+
+    <div class="total-block">
+      <div class="total-num">${totalOwned}<span class="total-denom"> / ${totalAll}</span></div>
+      <div class="total-label">보유 카드</div>
+      <div class="total-pct">${totalPct}%</div>
     </div>
+
+    <div class="sum-section">${summaryRows}</div>
   </div>
 
   ${seasonBlocks}
