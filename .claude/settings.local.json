@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:jp.mercari.com)",
+      "WebSearch",
+      "WebFetch(domain:buyee.jp)",
+      "WebFetch(domain:api.mercari.jp)",
+      "WebFetch(domain:www.fromjapan.co.jp)",
+      "WebFetch(domain:www.mercari.com)",
+      "WebFetch(domain:www.ebay.com)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(python -c \"import json; d=json.load\\(open\\(''mercari_raw.json''\\)\\); print\\(f''{len\\(d\\)} listings''\\); [print\\(f\"\"{i[''status'']:<10} ¥{i[''price'']:>6,}  {i[''title''][:70]}\"\"\\) for i in d[:5]]\")",
+      "Bash(python -c \":*)",
+      "Bash(.venv/Scripts/python -c \":*)",
+      "Bash(.venv/Scripts/python scrape_mercari.py --analyze-only)",
+      "Bash(start index.html)",
+      "Bash(.venv/Scripts/python build_prices.py)"
+    ]
+  }
+}

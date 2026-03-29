@@ -15,6 +15,7 @@
       <button onclick="showSeason('3', this)">시즌3</button>
       <button onclick="showSeason('4', this)">시즌4</button>
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
+      <button onclick="showPrices(this)">가격</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
       <!-- Progress + save code (collection mode only) -->
       <div id="collTopBar" style="display:none">
@@ -78,13 +79,54 @@
       <button class="rarity-btn" onclick="filterRarity('SE', this)">SE</button>
     </aside>
 
-    <div class="main-area">
-      <div id="overview">
-        <img src="cards/zc123.png" class="overview-image">
+      <div class="main-area">
+        <div id="overview">
+          <img src="cards/zc123.png" class="overview-image">
+        </div>
+        <main class="card-grid" id="cardGrid"></main>
       </div>
-      <main class="card-grid" id="cardGrid"></main>
-    </div>
 
+  </div>
+
+  <!-- Price view — full width, outside sidebar layout -->
+  <div id="priceView" style="display:none">
+    <div class="price-header">
+      <div class="price-header-top">
+        <div>
+          <h2 class="price-title">메르카리 시세</h2>
+          <p class="price-subtitle">메르카리 재팬 실거래 데이터 기반 · 황색 테두리 = 개별 데이터, 그 외 = 등급 평균</p>
+        </div>
+        <div class="rarity-price-grid" id="rarityPriceGrid"></div>
+      </div>
+      <div class="price-filters">
+        <div class="price-filter-group">
+          <span class="filter-label">시즌</span>
+          <button class="price-filter-btn active" onclick="setPriceSeason('all',this)">전체</button>
+          <button class="price-filter-btn" onclick="setPriceSeason('1',this)">시즌1</button>
+          <button class="price-filter-btn" onclick="setPriceSeason('2',this)">시즌2</button>
+          <button class="price-filter-btn" onclick="setPriceSeason('3',this)">시즌3</button>
+          <button class="price-filter-btn" onclick="setPriceSeason('4',this)">시즌4</button>
+        </div>
+        <div class="price-filter-group">
+          <span class="filter-label">등급</span>
+          <button class="price-filter-btn active" onclick="setPriceRarity('all',this)">전체</button>
+          <button class="price-filter-btn" onclick="setPriceRarity('UR',this)">UR</button>
+          <button class="price-filter-btn" onclick="setPriceRarity('SR',this)">SR</button>
+          <button class="price-filter-btn" onclick="setPriceRarity('R',this)">R</button>
+          <button class="price-filter-btn" onclick="setPriceRarity('N',this)">N</button>
+          <button class="price-filter-btn" onclick="setPriceRarity('SEC',this)">SE</button>
+        </div>
+        <div class="price-filter-group">
+          <span class="filter-label">데이터</span>
+          <button class="price-filter-btn active" onclick="setPriceData('all',this)">전체</button>
+          <button class="price-filter-btn" onclick="setPriceData('specific',this)">개별 데이터</button>
+          <button class="price-filter-btn" onclick="setPriceData('fallback',this)">등급 평균</button>
+        </div>
+      </div>
+    </div>
+    <div class="price-grid-wrap">
+      <div id="priceGrid" class="price-grid"></div>
+    </div>
   </div>
 
   <!-- 모달 -->
@@ -100,6 +142,7 @@
   </div>
 
   <script src="cards.js"></script>
+  <script src="prices.js"></script>
   <script>
     let viewMode         = 'overview';
     let currentSeason    = 'all';
@@ -108,7 +151,10 @@
     let currentType      = 'all';
     let currentOwnership = 'all';
     let isSharedView     = false;
-    let savedOwnedCards  = null; // preserves own collection while viewing shared
+    let savedOwnedCards  = null;
+    let priceSeason      = 'all';
+    let priceRarity      = 'all';
+    let priceData        = 'all';
 
     let ownedCards = new Set(JSON.parse(localStorage.getItem('zc_owned') || '[]'));
 
@@ -121,9 +167,10 @@
       saveOwned();
     }
 
-    const grid     = document.getElementById('cardGrid');
-    const sidebar  = document.getElementById('sidebar');
-    const overview = document.getElementById('overview');
+    const grid      = document.getElementById('cardGrid');
+    const sidebar   = document.getElementById('sidebar');
+    const overview  = document.getElementById('overview');
+    const priceView = document.getElementById('priceView');
 
     // ── Render ─────────────────────────────────────────────
     function renderCards() {
@@ -214,8 +261,10 @@
       clearActive('.top-left button');
       btn.classList.add('active');
       clearActive('.sidebar button');
-      overview.style.display = 'flex';
-      grid.style.display     = 'none';
+      overview.style.display   = 'flex';
+      grid.style.display       = 'none';
+      priceView.style.display  = 'none';
+      sidebar.style.display    = '';
       sidebar.classList.add('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
@@ -227,8 +276,10 @@
       viewMode = 'browse';
       clearActive('.top-left button');
       btn.classList.add('active');
-      overview.style.display = 'none';
-      grid.style.display     = 'grid';
+      overview.style.display  = 'none';
+      priceView.style.display = 'none';
+      grid.style.display      = 'grid';
+      sidebar.style.display   = '';
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
@@ -239,6 +290,8 @@
 
     function showCollection(btn) {
       viewMode = 'collection';
+      priceView.style.display = 'none';
+      sidebar.style.display   = '';
       clearActive('.top-left button');
       btn.classList.add('active');
       clearActive('.sidebar .rarity-btn');
@@ -607,6 +660,102 @@
       const w = window.open('', '_blank');
       w.document.write(html);
       w.document.close();
+    }
+
+    // ── Price tab ───────────────────────────────────────────
+    function buildRarityPriceGrid() {
+      const rarityMeta = [
+        { r:'N',   label:'N',  color:'#555' },
+        { r:'R',   label:'R',  color:'#1565c0' },
+        { r:'SR',  label:'SR', color:'#7b5ea7' },
+        { r:'UR',  label:'UR', color:'#b8860b' },
+        { r:'SEC', label:'SE', color:'#ad1457' },
+      ];
+      document.getElementById('rarityPriceGrid').innerHTML = rarityMeta.map(({ r, label, color }) => {
+        const p = (typeof RARITY_PRICES !== 'undefined' && RARITY_PRICES[r]) || {};
+        const buy  = p.buy  ? '¥' + p.buy.toLocaleString()  : '—';
+        const sell = p.sell ? '¥' + p.sell.toLocaleString() : '—';
+        return `<div class="rarity-price-card">
+          <span class="rp-badge" style="color:${color}">${label}</span>
+          <div class="rp-row"><span class="rp-label">매입</span><span class="rp-buy">${buy}</span></div>
+          <div class="rp-row"><span class="rp-label">판매</span><span class="rp-sell">${sell}</span></div>
+        </div>`;
+      }).join('');
+    }
+
+    function cardPrice(c) {
+      if (typeof CARD_PRICES !== 'undefined' && CARD_PRICES[c.src])
+        return { ...CARD_PRICES[c.src], specific: true };
+      if (typeof RARITY_PRICES !== 'undefined' && RARITY_PRICES[c.rarity])
+        return { ...RARITY_PRICES[c.rarity], specific: false };
+      return { buy: 0, sell: 0, specific: false };
+    }
+
+    function renderPriceCards() {
+      const frag = document.createDocumentFragment();
+      for (const c of CARDS) {
+        if (priceSeason !== 'all' && c.season !== priceSeason) continue;
+        if (priceRarity !== 'all' && c.rarity !== priceRarity) continue;
+        const p = cardPrice(c);
+        if (priceData === 'specific' && !p.specific) continue;
+        if (priceData === 'fallback'  &&  p.specific) continue;
+
+        const buy  = p.buy  ? '¥' + p.buy.toLocaleString()  : '—';
+        const sell = p.sell ? '¥' + p.sell.toLocaleString() : '—';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'price-card' + (p.specific ? ' price-specific' : '');
+        wrap.onclick = () => openModal(c);
+        wrap.innerHTML = `
+          <div class="price-card-img"><img src="${c.src}" loading="lazy"></div>
+          <div class="price-card-info">
+            <div class="price-card-name">${c.name}</div>
+            <div class="price-card-prices">
+              <span class="pc-buy">매입 ${buy}</span>
+              <span class="pc-sell">판매 ${sell}</span>
+            </div>
+          </div>`;
+        frag.appendChild(wrap);
+      }
+      const pg = document.getElementById('priceGrid');
+      pg.textContent = '';
+      pg.appendChild(frag);
+    }
+
+    function showPrices(btn) {
+      viewMode = 'prices';
+      clearActive('.top-left button');
+      btn.classList.add('active');
+      overview.style.display  = 'none';
+      grid.style.display      = 'none';
+      priceView.style.display = 'flex';
+      sidebar.style.display   = 'none';
+      document.getElementById('collTopBar').style.display    = 'none';
+      document.getElementById('collSeasonNav').style.display = 'none';
+      setOwnershipVisibility(false);
+      buildRarityPriceGrid();
+      renderPriceCards();
+    }
+
+    function setPriceSeason(s, btn) {
+      priceSeason = s;
+      document.querySelectorAll('.price-filter-group:nth-child(1) .price-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPriceCards();
+    }
+
+    function setPriceRarity(r, btn) {
+      priceRarity = r;
+      document.querySelectorAll('.price-filter-group:nth-child(2) .price-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPriceCards();
+    }
+
+    function setPriceData(d, btn) {
+      priceData = d;
+      document.querySelectorAll('.price-filter-group:nth-child(3) .price-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPriceCards();
     }
 
     // ── Modal ───────────────────────────────────────────────
