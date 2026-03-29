@@ -189,7 +189,7 @@ button.active {
   filter: grayscale(60%) opacity(0.6);
 }
 
-/* ── Owned checkmark badge ───────────────────────────────── */
+/* ── Owned checkmark badge (shared/read-only view) ───────── */
 .owned-mark {
   display: none;
   position: absolute;
@@ -198,32 +198,64 @@ button.active {
   background: #2e7d32;
   color: #fff;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  font-size: 14px;
-  line-height: 24px;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 22px;
   text-align: center;
   font-weight: bold;
   box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
+.card-wrap.owned .owned-mark { display: block; }
 
-.card-wrap.owned .owned-mark {
-  display: block;
+/* ── Count stepper badge (editable collection) ───────────── */
+.count-badge {
+  display: none;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #2e7d32;
+  color: #fff;
+  border-radius: 12px;
+  height: 24px;
+  align-items: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.card-wrap.owned .count-badge { display: flex; }
+
+.cnt-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.cnt-btn:hover { opacity: 0.75; }
+
+.cnt-num {
+  min-width: 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  pointer-events: none;
 }
 
-/* In collection view, unowned shows a + hint on hover */
-#collectionHeader ~ .card-grid .card-wrap.unowned:hover::after {
+/* In collection view, unowned card shows a + hint on hover */
+.card-grid .card-wrap.unowned:hover::after {
   content: '+';
   position: absolute;
-  top: 6px;
-  right: 6px;
-  background: #555;
+  top: 5px;
+  right: 5px;
+  background: rgba(0,0,0,0.45);
   color: #fff;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   font-size: 18px;
-  line-height: 24px;
+  line-height: 22px;
   text-align: center;
   font-weight: bold;
 }
