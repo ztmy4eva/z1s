@@ -156,16 +156,20 @@
     let priceRarity      = 'all';
     let priceData        = 'all';
 
-    let ownedCards = new Set(JSON.parse(localStorage.getItem('zc_owned') || '[]'));
+    let ownedCards = (() => {
+      const raw = JSON.parse(localStorage.getItem('zc_owned') || 'null');
+      if (!raw) return new Map();
+      if (Array.isArray(raw)) return new Map(raw.map(src => [src, 1]));
+      return new Map(Object.entries(raw).map(([src, n]) => [src, Number(n)]));
+    })();
 
     function saveOwned() {
-      localStorage.setItem('zc_owned', JSON.stringify([...ownedCards]));
+      const obj = {};
+      ownedCards.forEach((n, src) => { if (n > 0) obj[src] = n; });
+      localStorage.setItem('zc_owned', JSON.stringify(obj));
     }
-    function toggleOwned(src) {
-      if (ownedCards.has(src)) ownedCards.delete(src);
-      else ownedCards.add(src);
-      saveOwned();
-    }
+    function isOwned(src)  { return (ownedCards.get(src) || 0) > 0; }
+    function getCount(src) { return ownedCards.get(src) || 0; }
 
     const grid      = document.getElementById('cardGrid');
     const sidebar   = document.getElementById('sidebar');
@@ -182,12 +186,13 @@
         if (activeSeason !== 'all' && c.season !== activeSeason) continue;
         if (currentRarity    !== 'all' && c.rarity !== currentRarity) continue;
         if (currentType      !== 'all' && c.type   !== currentType)   continue;
-        const isOwned = ownedCards.has(c.src);
-        if (currentOwnership === 'owned'   && !isOwned) continue;
-        if (currentOwnership === 'unowned' &&  isOwned) continue;
+        const count = getCount(c.src);
+        const owned = count > 0;
+        if (currentOwnership === 'owned'   && !owned) continue;
+        if (currentOwnership === 'unowned' &&  owned) continue;
 
         const wrap = document.createElement('div');
-        wrap.className = 'card-wrap' + (isCollView ? (isOwned ? ' owned' : ' unowned') : '');
+        wrap.className = 'card-wrap' + (isCollView ? (owned ? ' owned' : ' unowned') : '');
 
         const img = document.createElement('img');
         img.src = c.src;
@@ -195,17 +200,59 @@
         wrap.appendChild(img);
 
         if (isCollView && !isSharedView) {
-          // own collection: click to toggle
-          const mark = document.createElement('span');
-          mark.className = 'owned-mark';
-          mark.textContent = '✓';
-          wrap.appendChild(mark);
-          wrap.onclick = () => {
-            toggleOwned(c.src);
-            const now = ownedCards.has(c.src);
-            wrap.classList.toggle('owned',   now);
-            wrap.classList.toggle('unowned', !now);
+          // count stepper badge: [−][N][+]
+          const badge = document.createElement('div');
+          badge.className = 'count-badge';
+
+          const dec = document.createElement('button');
+          dec.className = 'cnt-btn';
+          dec.textContent = '−';
+          dec.onclick = e => {
+            e.stopPropagation();
+            const n = getCount(c.src);
+            if (n <= 1) {
+              ownedCards.delete(c.src);
+              wrap.classList.replace('owned', 'unowned');
+            } else {
+              ownedCards.set(c.src, n - 1);
+              num.textContent = n - 1;
+            }
+            saveOwned();
             updateProgress();
+          };
+
+          const num = document.createElement('span');
+          num.className = 'cnt-num';
+          num.textContent = count || '';
+
+          const inc = document.createElement('button');
+          inc.className = 'cnt-btn';
+          inc.textContent = '+';
+          inc.onclick = e => {
+            e.stopPropagation();
+            const n = getCount(c.src);
+            const next = n + 1;
+            ownedCards.set(c.src, next);
+            num.textContent = next;
+            if (!owned) {
+              wrap.classList.replace('unowned', 'owned');
+            }
+            saveOwned();
+            updateProgress();
+          };
+
+          badge.append(dec, num, inc);
+          wrap.appendChild(badge);
+
+          // click card body = enable (set count 1) if not already owned
+          wrap.onclick = () => {
+            if (!isOwned(c.src)) {
+              ownedCards.set(c.src, 1);
+              wrap.classList.replace('unowned', 'owned');
+              num.textContent = '1';
+              saveOwned();
+              updateProgress();
+            }
           };
         } else if (isCollView && isSharedView) {
           // shared view: click opens modal (read-only)
@@ -229,7 +276,7 @@
       document.getElementById('collectionProgress').innerHTML =
         ['1','2','3','4'].map(s => {
           const total = CARDS.filter(c => c.season === s).length;
-          const owned = CARDS.filter(c => c.season === s && ownedCards.has(c.src)).length;
+          const owned = CARDS.filter(c => c.season === s && isOwned(c.src)).length;
           const pct   = total ? Math.round(owned / total * 100) : 0;
           return `<div class="prog-item" id="prog-${s}">
             <div class="prog-label">시즌${s}</div>
@@ -242,7 +289,7 @@
     function updateProgress() {
       ['1','2','3','4'].forEach(s => {
         const total = CARDS.filter(c => c.season === s).length;
-        const owned = CARDS.filter(c => c.season === s && ownedCards.has(c.src)).length;
+        const owned = CARDS.filter(c => c.season === s && isOwned(c.src)).length;
         const pct   = total ? Math.round(owned / total * 100) : 0;
         const item  = document.getElementById(`prog-${s}`);
         if (!item) return;
@@ -354,43 +401,45 @@
     }
 
     function encodeCollection() {
-      const indices = [];
-      CARDS.forEach((c, i) => { if (ownedCards.has(c.src)) indices.push(i); });
-
-      if (indices.length < 27) {
-        // index mode — 2 bytes per card, much shorter for sparse collections
-        const bytes = new Uint8Array(indices.length * 2);
-        indices.forEach((idx, i) => {
-          bytes[i * 2]     = (idx >> 8) & 0xFF;
-          bytes[i * 2 + 1] =  idx       & 0xFF;
-        });
-        return 'i' + b64(bytes);
-      } else {
-        // bitmask mode
-        const bytes = new Uint8Array(Math.ceil(CARDS.length / 8));
-        CARDS.forEach((c, i) => {
-          if (ownedCards.has(c.src)) bytes[i >> 3] |= (1 << (i & 7));
-        });
-        return 'b' + b64(bytes);
-      }
+      // 'c' format: 3 bytes per owned card — [idx_hi, idx_lo, count]
+      const entries = [];
+      CARDS.forEach((c, i) => {
+        const n = getCount(c.src);
+        if (n > 0) entries.push([i, n]);
+      });
+      const bytes = new Uint8Array(entries.length * 3);
+      entries.forEach(([idx, n], i) => {
+        bytes[i * 3]     = (idx >> 8) & 0xFF;
+        bytes[i * 3 + 1] =  idx       & 0xFF;
+        bytes[i * 3 + 2] =  n;
+      });
+      return 'c' + b64(bytes);
     }
 
     function decodeCollection(raw) {
-      const code  = raw.trim();
-      const mode  = code[0];
-      const owned = new Set();
+      const code = raw.trim();
+      const mode = code[0];
+      const owned = new Map();
 
-      if (mode === 'i') {
+      if (mode === 'c') {
+        const bytes = unb64(code.slice(1));
+        for (let i = 0; i + 2 < bytes.length; i += 3) {
+          const idx = (bytes[i] << 8) | bytes[i + 1];
+          const cnt = bytes[i + 2];
+          if (idx < CARDS.length && cnt > 0) owned.set(CARDS[idx].src, cnt);
+        }
+      } else if (mode === 'i') {
+        // legacy index format (count=1)
         const bytes = unb64(code.slice(1));
         for (let i = 0; i + 1 < bytes.length; i += 2) {
           const idx = (bytes[i] << 8) | bytes[i + 1];
-          if (idx < CARDS.length) owned.add(CARDS[idx].src);
+          if (idx < CARDS.length) owned.set(CARDS[idx].src, 1);
         }
       } else {
-        // 'b' prefix or legacy 72-char code (no prefix)
+        // 'b' prefix or legacy 72-char code (no prefix), count=1
         const bytes = unb64(mode === 'b' ? code.slice(1) : code);
         CARDS.forEach((c, i) => {
-          if (bytes[i >> 3] & (1 << (i & 7))) owned.add(c.src);
+          if (bytes[i >> 3] & (1 << (i & 7))) owned.set(c.src, 1);
         });
       }
       return owned;
@@ -439,7 +488,7 @@
     // ── Shared view ─────────────────────────────────────────
     function enterSharedView(code) {
       try {
-        savedOwnedCards = new Set(ownedCards);
+        savedOwnedCards = new Map(ownedCards);
         ownedCards = decodeCollection(code);
         isSharedView = true;
         document.getElementById('sharedBanner').style.display = 'flex';
@@ -483,7 +532,7 @@
     function printCollection() {
       const baseUrl    = location.href.split('#')[0].replace(/\/[^/]*$/, '/');
       const totalAll   = CARDS.length;
-      const totalOwned = CARDS.filter(c => ownedCards.has(c.src)).length;
+      const totalOwned = CARDS.filter(c => isOwned(c.src)).length;
       const totalPct   = Math.round(totalOwned / totalAll * 100);
       const date       = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
 
@@ -491,17 +540,18 @@
 
       const seasonBlocks = ['1','2','3','4'].map(s => {
         const seasonCards = CARDS.filter(c => c.season === s);
-        const ownedN      = seasonCards.filter(c => ownedCards.has(c.src)).length;
+        const ownedN      = seasonCards.filter(c => isOwned(c.src)).length;
         const pct         = Math.round(ownedN / seasonCards.length * 100);
 
         const slots = seasonCards.map(c => {
-          const have  = ownedCards.has(c.src);
+          const have  = isOwned(c.src);
+          const cnt   = getCount(c.src);
           const color = rarityColor[c.rarity] || '#555';
           return `
             <div class="slot ${have ? 'have' : 'miss'}">
               <div class="img-wrap">
                 <img src="${baseUrl}${c.src}" />
-                ${have ? '<div class="check">✓</div>' : ''}
+                ${have ? `<div class="check">${cnt === 1 ? '✓' : '×' + cnt}</div>` : ''}
               </div>
               <div class="label">
                 <span class="rbadge" style="color:${color}">${c.rarity}</span>
@@ -524,7 +574,7 @@
       // summary cover page
       const summaryRows = ['1','2','3','4'].map(s => {
         const sc    = CARDS.filter(c => c.season === s);
-        const own   = sc.filter(c => ownedCards.has(c.src)).length;
+        const own   = sc.filter(c => isOwned(c.src)).length;
         const pct   = Math.round(own / sc.length * 100);
         return `
           <div class="sum-row">
