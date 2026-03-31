@@ -54,6 +54,24 @@ body {
   color: #fff !important;
 }
 
+.nav-music-btn {
+  display: inline-block;
+  padding: 9px 16px;
+  font-size: 14px;
+  border-radius: 8px;
+  background: rgba(124,106,245,.18);
+  color: #c084fc;
+  border: 1px solid rgba(124,106,245,.35);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.nav-music-btn:hover {
+  background: rgba(124,106,245,.35);
+  color: #e0c0ff;
+}
+
 .buy-btn {
   display: inline-block;
   padding: 12px 20px;

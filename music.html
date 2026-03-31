@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ずっと真夜中でいいのに。— Discography</title>
+  <link rel="stylesheet" href="music.css">
+</head>
+<body>
+
+<!-- ── Top Nav ─────────────────────────────────────────── -->
+<header class="top-nav">
+  <a class="nav-home" href="index.html">← 카드</a>
+  <div class="nav-brand">
+    <span class="nav-ja">ずっと真夜中でいいのに。</span>
+    <span class="nav-sub">Discography</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-search-btn" id="searchToggle" aria-label="검색">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- ── Search Overlay ─────────────────────────────────── -->
+<div class="search-overlay" id="searchOverlay">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="곡명, 앨범명 검색... / 楽曲・アルバム検索..." autocomplete="off" spellcheck="false">
+    <button class="search-close" id="searchClose">✕</button>
+  </div>
+  <div class="search-results" id="searchResults"></div>
+</div>
+
+<!-- ── View: Albums Grid ──────────────────────────────── -->
+<main class="view" id="viewAlbums">
+  <div class="albums-header">
+    <h1 class="page-title">
+      <span class="title-ja">ディスコグラフィー</span>
+      <span class="title-kr">디스코그래피</span>
+    </h1>
+    <p class="page-subtitle">Click an album to explore tracks</p>
+  </div>
+  <div class="albums-grid" id="albumsGrid"></div>
+</main>
+
+<!-- ── View: Track List ───────────────────────────────── -->
+<main class="view hidden" id="viewTracks">
+  <div class="album-detail-header">
+    <button class="back-btn" id="backToAlbums">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      <span>디스코그래피</span>
+    </button>
+    <div class="album-hero" id="albumHero"></div>
+  </div>
+  <div class="tracklist" id="tracklist"></div>
+</main>
+
+<!-- ── View: Song Detail ──────────────────────────────── -->
+<main class="view hidden" id="viewSong">
+  <div class="song-nav">
+    <button class="back-btn" id="backToTracks">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      <span id="backAlbumLabel">앨범으로</span>
+    </button>
+    <div class="song-nav-arrows">
+      <button class="arrow-btn" id="prevSong" title="이전 곡">&#8249;</button>
+      <button class="arrow-btn" id="nextSong" title="다음 곡">&#8250;</button>
+    </div>
+  </div>
+
+  <div class="song-layout">
+    <!-- Left: video + song info -->
+    <div class="song-left">
+      <div class="song-titles" id="songTitles"></div>
+
+      <div class="video-wrap" id="videoWrap">
+        <div class="video-placeholder" id="videoPlaceholder">
+          <div class="vp-inner">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+            </svg>
+            <p>No official MV available</p>
+            <p class="vp-sub">Search on YouTube</p>
+          </div>
+        </div>
+        <div class="yt-container" id="ytContainer"></div>
+      </div>
+
+      <div class="song-meta" id="songMeta"></div>
+    </div>
+
+    <!-- Right: lyrics -->
+    <div class="song-right">
+      <div class="lyrics-header">
+        <span class="lyrics-label">가사 / 歌詞</span>
+        <div class="lang-tabs" id="langTabs">
+          <button class="lang-tab active" data-lang="ja">日本語</button>
+          <button class="lang-tab" data-lang="kr">한국어</button>
+          <button class="lang-tab" data-lang="en">English</button>
+          <button class="lang-tab" data-lang="split">対訳</button>
+        </div>
+      </div>
+      <div class="lyrics-body" id="lyricsBody"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Toast ─────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── Scripts ───────────────────────────────────────── -->
+<script src="music_data.js"></script>
+<script>
+'use strict';
+
+// ── State ─────────────────────────────────────────────
+let currentAlbum  = null;
+let currentTrack  = null;
+let currentLang   = localStorage.getItem('ztmy_lyrics_lang') || 'ja';
+let ytPlayer      = null;
+let ytApiReady    = false;
+let pendingYtId   = null;
+
+const views = {
+  albums: document.getElementById('viewAlbums'),
+  tracks: document.getElementById('viewTracks'),
+  song:   document.getElementById('viewSong'),
+};
+
+// ── Helpers ───────────────────────────────────────────
+function showView(name) {
+  Object.entries(views).forEach(([k, el]) => {
+    el.classList.toggle('hidden', k !== name);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function coverUrl(album) {
+  return album.cover || '';
+}
+
+function albumTypeBadge(album) {
+  return `<span class="type-badge type-${album.type.replace(/\s+/g,'-').toLowerCase()}">${album.type}</span>`;
+}
+
+function trackHasMv(track) {
+  return track.has_mv && track.youtube_id;
+}
+
+// ── Albums Grid ───────────────────────────────────────
+function renderAlbums() {
+  const grid = document.getElementById('albumsGrid');
+  grid.innerHTML = ZUTOMAYO.albums.map(album => {
+    const mvCount = album.tracks.filter(t => t.has_mv && t.youtube_id).length;
+    return `
+      <div class="album-card" data-album="${album.id}" role="button" tabindex="0">
+        <div class="album-cover-wrap">
+          <div class="album-cover" style="${album.cover ? `background-image:url('${album.cover}')` : ''}">
+            ${!album.cover ? `<div class="cover-placeholder"><span>${album.title_ja[0]}</span></div>` : ''}
+          </div>
+          <div class="album-overlay">
+            <span class="overlay-play">▶ Play</span>
+          </div>
+        </div>
+        <div class="album-info">
+          ${albumTypeBadge(album)}
+          <h2 class="album-title-ja">${album.title_ja}</h2>
+          <p class="album-title-kr">${album.title_kr}</p>
+          <p class="album-title-en">${album.title_en}</p>
+          <div class="album-meta">
+            <span class="album-year">${album.year}</span>
+            <span class="album-tracks">${album.tracks.length}곡</span>
+            ${mvCount ? `<span class="album-mv">${mvCount} MV</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.album-card').forEach(card => {
+    const open = () => openAlbum(card.dataset.album);
+    card.addEventListener('click', open);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
+  });
+}
+
+// ── Track List ────────────────────────────────────────
+function openAlbum(albumId) {
+  currentAlbum = ZUTOMAYO.albums.find(a => a.id === albumId);
+  if (!currentAlbum) return;
+
+  // Hero
+  document.getElementById('albumHero').innerHTML = `
+    <div class="hero-cover" style="${currentAlbum.cover ? `background-image:url('${currentAlbum.cover}')` : ''}">
+      ${!currentAlbum.cover ? `<div class="cover-placeholder large"><span>${currentAlbum.title_ja[0]}</span></div>` : ''}
+    </div>
+    <div class="hero-info">
+      ${albumTypeBadge(currentAlbum)}
+      <h2 class="hero-title-ja">${currentAlbum.title_ja}</h2>
+      <p class="hero-title-kr">${currentAlbum.title_kr}</p>
+      <p class="hero-title-en">${currentAlbum.title_en}</p>
+      <p class="hero-year">${currentAlbum.year} · ${currentAlbum.tracks.length}곡</p>
+    </div>
+  `;
+
+  // Tracklist
+  document.getElementById('tracklist').innerHTML = `
+    <div class="track-header-row">
+      <span class="th-num">#</span>
+      <span class="th-title">곡명</span>
+      <span class="th-mv">MV</span>
+    </div>
+    ${currentAlbum.tracks.map((t, i) => `
+      <div class="track-row" data-index="${i}" role="button" tabindex="0">
+        <span class="track-num">${t.track}</span>
+        <div class="track-titles">
+          <span class="track-ja">${t.title_ja}</span>
+          <span class="track-kr">${t.title_kr}</span>
+          <span class="track-en">${t.title_en}</span>
+        </div>
+        <span class="track-mv-icon">${trackHasMv(t) ? '<span class="mv-dot" title="MV available">▶</span>' : ''}</span>
+      </div>
+    `).join('')}
+  `;
+
+  document.querySelectorAll('.track-row').forEach(row => {
+    const open = () => openSong(parseInt(row.dataset.index));
+    row.addEventListener('click', open);
+    row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
+  });
+
+  showView('tracks');
+}
+
+// ── Song Detail ───────────────────────────────────────
+function openSong(index) {
+  currentTrack = index;
+  const track = currentAlbum.tracks[index];
+
+  // Back label
+  document.getElementById('backAlbumLabel').textContent = currentAlbum.title_ja;
+
+  // Prev/next buttons
+  document.getElementById('prevSong').disabled = index === 0;
+  document.getElementById('nextSong').disabled = index === currentAlbum.tracks.length - 1;
+
+  // Song titles
+  document.getElementById('songTitles').innerHTML = `
+    <span class="song-track-num">Track ${track.track}</span>
+    <h1 class="song-title-ja">${track.title_ja}</h1>
+    <p class="song-title-kr">${track.title_kr}</p>
+    <p class="song-title-en">${track.title_en}</p>
+    ${track.romanized ? `<p class="song-romanized">${track.romanized}</p>` : ''}
+  `;
+
+  // Album meta
+  document.getElementById('songMeta').innerHTML = `
+    <a class="album-back-link" href="#" id="songAlbumLink">
+      <span class="meta-icon">💿</span>
+      <span>${currentAlbum.title_ja} (${currentAlbum.year})</span>
+    </a>
+    ${track.youtube_id ? `
+      <a class="yt-link" href="https://www.youtube.com/watch?v=${track.youtube_id}" target="_blank" rel="noopener">
+        <span class="meta-icon">🔗</span>YouTube で開く
+      </a>` : ''}
+    <a class="search-link" href="https://www.youtube.com/results?search_query=${encodeURIComponent(track.title_ja + ' ずっと真夜中でいいのに')}" target="_blank" rel="noopener">
+      <span class="meta-icon">🔍</span>YouTube を検索
+    </a>
+  `;
+  document.getElementById('songAlbumLink').addEventListener('click', e => {
+    e.preventDefault(); showView('tracks');
+  });
+
+  // Video
+  loadVideo(track);
+
+  // Lyrics
+  renderLyrics(track);
+  setActiveLangTab(currentLang);
+
+  showView('song');
+}
+
+// ── YouTube ───────────────────────────────────────────
+function loadYouTubeApi() {
+  if (document.getElementById('yt-api-script')) return;
+  const s = document.createElement('script');
+  s.id  = 'yt-api-script';
+  s.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(s);
+}
+
+window.onYouTubeIframeAPIReady = function() {
+  ytApiReady = true;
+  if (pendingYtId) createYtPlayer(pendingYtId);
+};
+
+function createYtPlayer(videoId) {
+  document.getElementById('ytContainer').innerHTML = '<div id="ytFrame"></div>';
+  ytPlayer = new YT.Player('ytFrame', {
+    videoId,
+    playerVars: { rel: 0, modestbranding: 1, color: 'white' },
+    events: { onReady: e => e.target.playVideo() },
+  });
+}
+
+function loadVideo(track) {
+  const wrap  = document.getElementById('videoWrap');
+  const ph    = document.getElementById('videoPlaceholder');
+  const ytCon = document.getElementById('ytContainer');
+
+  // Destroy old player
+  if (ytPlayer) { try { ytPlayer.destroy(); } catch(e) {} ytPlayer = null; }
+  ytCon.innerHTML = '';
+
+  if (track.youtube_id) {
+    ph.style.display = 'none';
+    wrap.classList.add('has-video');
+    loadYouTubeApi();
+    if (ytApiReady) {
+      createYtPlayer(track.youtube_id);
+    } else {
+      pendingYtId = track.youtube_id;
+    }
+  } else {
+    ph.style.display = '';
+    wrap.classList.remove('has-video');
+    pendingYtId = null;
+  }
+}
+
+// ── Lyrics ────────────────────────────────────────────
+function renderLyrics(track) {
+  const body = document.getElementById('lyricsBody');
+  const lang = currentLang;
+
+  if (lang === 'split') {
+    // Side-by-side JA / KR
+    const ja = track.lyrics_ja;
+    const kr = track.lyrics_kr;
+    if (!ja && !kr) {
+      body.innerHTML = lyricsEmpty(track);
+      return;
+    }
+    const jaLines = (ja || '').split('\n');
+    const krLines = (kr || '').split('\n');
+    const max = Math.max(jaLines.length, krLines.length);
+    let html = '<div class="split-lyrics">';
+    for (let i = 0; i < max; i++) {
+      const jl = jaLines[i] ?? '';
+      const kl = krLines[i] ?? '';
+      html += `<div class="split-line">
+        <span class="split-ja">${escHtml(jl)}</span>
+        <span class="split-kr">${escHtml(kl)}</span>
+      </div>`;
+    }
+    html += '</div>';
+    body.innerHTML = html;
+    return;
+  }
+
+  const txt = lang === 'ja' ? track.lyrics_ja
+            : lang === 'kr' ? track.lyrics_kr
+            : track.lyrics_en;
+
+  if (!txt || !txt.trim()) {
+    body.innerHTML = lyricsEmpty(track);
+    return;
+  }
+
+  body.innerHTML = `<pre class="lyrics-text">${escHtml(txt)}</pre>`;
+}
+
+function lyricsEmpty(track) {
+  const searchQ = encodeURIComponent(track.title_ja + ' 歌詞');
+  const searchKr = encodeURIComponent(track.title_ja + ' 가사');
+  return `
+    <div class="lyrics-empty">
+      <div class="lyrics-empty-icon">🎵</div>
+      <p>가사가 아직 없습니다</p>
+      <p class="lyrics-empty-sub">歌詞はまだ登録されていません</p>
+      <div class="lyrics-search-links">
+        <a href="https://www.google.com/search?q=${searchQ}" target="_blank" rel="noopener" class="lyrics-link">日本語 歌詞を検索</a>
+        <a href="https://www.google.com/search?q=${searchKr}" target="_blank" rel="noopener" class="lyrics-link">한국어 가사 검색</a>
+        <a href="https://genius.com/search?q=${encodeURIComponent(track.title_en + ' ZUTOMAYO')}" target="_blank" rel="noopener" class="lyrics-link">Genius</a>
+      </div>
+    </div>
+  `;
+}
+
+function escHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function setActiveLangTab(lang) {
+  currentLang = lang;
+  localStorage.setItem('ztmy_lyrics_lang', lang);
+  document.querySelectorAll('.lang-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  if (currentAlbum && currentTrack !== null) {
+    renderLyrics(currentAlbum.tracks[currentTrack]);
+  }
+}
+
+// ── Search ────────────────────────────────────────────
+function doSearch(query) {
+  const q = query.trim().toLowerCase();
+  const res = document.getElementById('searchResults');
+  if (!q) { res.innerHTML = ''; return; }
+
+  const hits = [];
+  ZUTOMAYO.albums.forEach(album => {
+    // Album match
+    if ([album.title_ja, album.title_kr, album.title_en, album.romanized]
+        .some(t => t && t.toLowerCase().includes(q))) {
+      hits.push({ type: 'album', album, track: null });
+    }
+    // Track matches
+    album.tracks.forEach((track, idx) => {
+      if ([track.title_ja, track.title_kr, track.title_en, track.romanized]
+          .some(t => t && t.toLowerCase().includes(q))) {
+        hits.push({ type: 'track', album, track, idx });
+      }
+    });
+  });
+
+  if (!hits.length) {
+    res.innerHTML = '<div class="search-empty">검색 결과가 없습니다</div>';
+    return;
+  }
+
+  res.innerHTML = hits.slice(0, 30).map(hit => {
+    if (hit.type === 'album') {
+      return `
+        <div class="search-hit" data-album="${hit.album.id}" data-type="album">
+          <span class="hit-icon">💿</span>
+          <div class="hit-info">
+            <span class="hit-ja">${hit.album.title_ja}</span>
+            <span class="hit-sub">${hit.album.title_kr} · ${hit.album.year}</span>
+          </div>
+        </div>`;
+    } else {
+      return `
+        <div class="search-hit" data-album="${hit.album.id}" data-idx="${hit.idx}" data-type="track">
+          <span class="hit-icon">${hit.track.has_mv && hit.track.youtube_id ? '▶' : '🎵'}</span>
+          <div class="hit-info">
+            <span class="hit-ja">${hit.track.title_ja}</span>
+            <span class="hit-sub">${hit.track.title_kr} · ${hit.album.title_ja}</span>
+          </div>
+        </div>`;
+    }
+  }).join('');
+
+  res.querySelectorAll('.search-hit').forEach(el => {
+    el.addEventListener('click', () => {
+      closeSearch();
+      const aId = el.dataset.album;
+      const type = el.dataset.type;
+      if (type === 'album') {
+        openAlbum(aId);
+      } else {
+        openAlbum(aId);
+        requestAnimationFrame(() => openSong(parseInt(el.dataset.idx)));
+      }
+    });
+  });
+}
+
+function openSearch() {
+  document.getElementById('searchOverlay').classList.add('open');
+  document.getElementById('searchInput').focus();
+}
+
+function closeSearch() {
+  document.getElementById('searchOverlay').classList.remove('open');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+}
+
+// ── Event Bindings ────────────────────────────────────
+document.getElementById('searchToggle').addEventListener('click', openSearch);
+document.getElementById('searchClose').addEventListener('click', closeSearch);
+document.getElementById('searchInput').addEventListener('input', e => doSearch(e.target.value));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSearch();
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openSearch(); }
+});
+
+document.getElementById('backToAlbums').addEventListener('click', () => showView('albums'));
+document.getElementById('backToTracks').addEventListener('click', () => showView('tracks'));
+
+document.getElementById('prevSong').addEventListener('click', () => {
+  if (currentTrack > 0) openSong(currentTrack - 1);
+});
+document.getElementById('nextSong').addEventListener('click', () => {
+  if (currentAlbum && currentTrack < currentAlbum.tracks.length - 1) openSong(currentTrack + 1);
+});
+
+// Keyboard arrow nav in song view
+document.addEventListener('keydown', e => {
+  if (views.song.classList.contains('hidden')) return;
+  if (e.key === 'ArrowLeft' && currentTrack > 0) openSong(currentTrack - 1);
+  if (e.key === 'ArrowRight' && currentAlbum && currentTrack < currentAlbum.tracks.length - 1) openSong(currentTrack + 1);
+});
+
+// Lang tabs
+document.getElementById('langTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.lang-tab');
+  if (btn) setActiveLangTab(btn.dataset.lang);
+});
+
+// ── Init ──────────────────────────────────────────────
+renderAlbums();
+setActiveLangTab(currentLang); // restore saved lang preference
+</script>
+</body>
+</html>
