@@ -16,6 +16,7 @@
       <button onclick="showSeason('4', this)">시즌4</button>
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
       <button onclick="showPrices(this)">가격</button>
+      <button onclick="showBestValue(this)">베스트 밸류</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
       <!-- Progress + save code (collection mode only) -->
       <div id="collTopBar" style="display:none">
@@ -129,6 +130,28 @@
     </div>
   </div>
 
+  <!-- Best Value view — full width -->
+  <div id="bestValueView" style="display:none">
+    <div class="price-header">
+      <div class="price-header-top">
+        <div>
+          <h2 class="price-title">베스트 밸류 카드</h2>
+          <p class="price-subtitle">메르카리 실거래 기준 · 등급 평균 대비 가장 저렴한 카드 TOP 5</p>
+        </div>
+      </div>
+    </div>
+    <div class="bv-sections">
+      <div class="bv-section">
+        <h3 class="bv-section-title">🏆 거래 완료 TOP 5 (낮은 가격순)</h3>
+        <div id="bvSold" class="bv-grid"></div>
+      </div>
+      <div class="bv-section">
+        <h3 class="bv-section-title">🔖 현재 판매 중 TOP 5 (낮은 가격순)</h3>
+        <div id="bvListed" class="bv-grid"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- 모달 -->
   <div id="cardModal" class="modal" onclick="closeModal(event)">
     <div class="modal-content">
@@ -155,6 +178,7 @@
     let priceSeason      = 'all';
     let priceRarity      = 'all';
     let priceData        = 'all';
+    const bestValueView  = document.getElementById('bestValueView');
 
     let ownedCards = new Set(JSON.parse(localStorage.getItem('zc_owned') || '[]'));
 
@@ -261,10 +285,11 @@
       clearActive('.top-left button');
       btn.classList.add('active');
       clearActive('.sidebar button');
-      overview.style.display   = 'flex';
-      grid.style.display       = 'none';
-      priceView.style.display  = 'none';
-      sidebar.style.display    = '';
+      overview.style.display        = 'flex';
+      grid.style.display            = 'none';
+      priceView.style.display       = 'none';
+      bestValueView.style.display   = 'none';
+      sidebar.style.display         = '';
       sidebar.classList.add('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
@@ -276,10 +301,11 @@
       viewMode = 'browse';
       clearActive('.top-left button');
       btn.classList.add('active');
-      overview.style.display  = 'none';
-      priceView.style.display = 'none';
-      grid.style.display      = 'grid';
-      sidebar.style.display   = '';
+      overview.style.display        = 'none';
+      priceView.style.display       = 'none';
+      bestValueView.style.display   = 'none';
+      grid.style.display            = 'grid';
+      sidebar.style.display         = '';
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
@@ -290,8 +316,9 @@
 
     function showCollection(btn) {
       viewMode = 'collection';
-      priceView.style.display = 'none';
-      sidebar.style.display   = '';
+      priceView.style.display     = 'none';
+      bestValueView.style.display = 'none';
+      sidebar.style.display       = '';
       clearActive('.top-left button');
       btn.classList.add('active');
       clearActive('.sidebar .rarity-btn');
@@ -726,15 +753,77 @@
       viewMode = 'prices';
       clearActive('.top-left button');
       btn.classList.add('active');
-      overview.style.display  = 'none';
-      grid.style.display      = 'none';
-      priceView.style.display = 'flex';
-      sidebar.style.display   = 'none';
+      overview.style.display        = 'none';
+      grid.style.display            = 'none';
+      priceView.style.display       = 'flex';
+      bestValueView.style.display   = 'none';
+      sidebar.style.display         = 'none';
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
       setOwnershipVisibility(false);
       buildRarityPriceGrid();
       renderPriceCards();
+    }
+
+    // ── Best Value tab ──────────────────────────────────────
+    function renderBestValueList(containerId, items) {
+      const el = document.getElementById(containerId);
+      if (!items || !items.length) {
+        el.innerHTML = '<p style="color:#888;padding:16px">데이터 없음 (build_prices.py를 실행하세요)</p>';
+        return;
+      }
+      el.innerHTML = items.map((e, i) => {
+        const pct      = Math.round(e.value_ratio * 100);
+        const bar      = Math.min(pct, 100);
+        const barColor = pct <= 60 ? '#2e7d32' : pct <= 85 ? '#f57f17' : '#c62828';
+        const displayName = e.name_ja || e.name_kr || e.src.split('/').pop();
+        const rarityColor = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#555', SEC:'#ad1457', PR:'#00838f' };
+        const rc = rarityColor[e.rarity] || '#555';
+        return `
+          <div class="bv-card" onclick="openModalBySrc('${e.src}')">
+            <div class="bv-rank">#${i+1}</div>
+            <div class="bv-img"><img src="${e.src}" loading="lazy"></div>
+            <div class="bv-info">
+              <div class="bv-name">
+                <span class="bv-rarity" style="color:${rc}">${e.rarity}</span>
+                ${displayName}
+              </div>
+              <div class="bv-prices">
+                <span class="bv-price">¥${e.price.toLocaleString()}</span>
+                <span class="bv-avg">평균 ¥${e.rarity_avg.toLocaleString()}</span>
+              </div>
+              <div class="bv-bar-wrap">
+                <div class="bv-bar-fill" style="width:${bar}%;background:${barColor}"></div>
+              </div>
+              <div class="bv-pct">${pct}% of avg</div>
+              <div class="bv-title">${e.title}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function showBestValue(btn) {
+      viewMode = 'bestvalue';
+      clearActive('.top-left button');
+      btn.classList.add('active');
+      overview.style.display        = 'none';
+      grid.style.display            = 'none';
+      priceView.style.display       = 'none';
+      bestValueView.style.display   = 'block';
+      sidebar.style.display         = 'none';
+      document.getElementById('collTopBar').style.display    = 'none';
+      document.getElementById('collSeasonNav').style.display = 'none';
+      setOwnershipVisibility(false);
+
+      const sold   = (typeof TOP_VALUE_SOLD   !== 'undefined') ? TOP_VALUE_SOLD   : [];
+      const listed = (typeof TOP_VALUE_LISTED !== 'undefined') ? TOP_VALUE_LISTED : [];
+      renderBestValueList('bvSold',   sold);
+      renderBestValueList('bvListed', listed);
+    }
+
+    function openModalBySrc(src) {
+      const c = CARDS.find(x => x.src === src);
+      if (c) openModal(c);
     }
 
     function setPriceSeason(s, btn) {
