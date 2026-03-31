@@ -16,6 +16,7 @@
       <button onclick="showSeason('4', this)">시즌4</button>
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
       <button onclick="showPrices(this)">가격</button>
+      <button onclick="showBestValue(this)">베스트 밸류</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
       <!-- Progress + save code (collection mode only) -->
       <div id="collTopBar" style="display:none">
@@ -129,6 +130,28 @@
     </div>
   </div>
 
+  <!-- Best Value view — full width -->
+  <div id="bestValueView" style="display:none">
+    <div class="price-header">
+      <div class="price-header-top">
+        <div>
+          <h2 class="price-title">베스트 밸류 카드</h2>
+          <p class="price-subtitle">메르카리 실거래 기준 · 등급 평균 대비 가장 저렴한 카드 TOP 5</p>
+        </div>
+      </div>
+    </div>
+    <div class="bv-sections">
+      <div class="bv-section">
+        <h3 class="bv-section-title">🏆 거래 완료 TOP 5 (낮은 가격순)</h3>
+        <div id="bvSold" class="bv-grid"></div>
+      </div>
+      <div class="bv-section">
+        <h3 class="bv-section-title">🔖 현재 판매 중 TOP 5 (낮은 가격순)</h3>
+        <div id="bvListed" class="bv-grid"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- 모달 -->
   <div id="cardModal" class="modal" onclick="closeModal(event)">
     <div class="modal-content">
@@ -155,6 +178,7 @@
     let priceSeason      = 'all';
     let priceRarity      = 'all';
     let priceData        = 'all';
+    const bestValueView  = document.getElementById('bestValueView');
 
     let ownedCards = (() => {
       const raw = JSON.parse(localStorage.getItem('zc_owned') || 'null');
@@ -308,10 +332,11 @@
       clearActive('.top-left button');
       btn.classList.add('active');
       clearActive('.sidebar button');
-      overview.style.display   = 'flex';
-      grid.style.display       = 'none';
-      priceView.style.display  = 'none';
-      sidebar.style.display    = '';
+      overview.style.display        = 'flex';
+      grid.style.display            = 'none';
+      priceView.style.display       = 'none';
+      bestValueView.style.display   = 'none';
+      sidebar.style.display         = '';
       sidebar.classList.add('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
@@ -323,10 +348,11 @@
       viewMode = 'browse';
       clearActive('.top-left button');
       btn.classList.add('active');
-      overview.style.display  = 'none';
-      priceView.style.display = 'none';
-      grid.style.display      = 'grid';
-      sidebar.style.display   = '';
+      overview.style.display        = 'none';
+      priceView.style.display       = 'none';
+      bestValueView.style.display   = 'none';
+      grid.style.display            = 'grid';
+      sidebar.style.display         = '';
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
@@ -337,8 +363,9 @@
 
     function showCollection(btn) {
       viewMode = 'collection';
-      priceView.style.display = 'none';
-      sidebar.style.display   = '';
+      priceView.style.display     = 'none';
+      bestValueView.style.display = 'none';
+      sidebar.style.display       = '';
       clearActive('.top-left button');
       btn.classList.add('active');
       clearActive('.sidebar .rarity-btn');
@@ -776,15 +803,77 @@
       viewMode = 'prices';
       clearActive('.top-left button');
       btn.classList.add('active');
-      overview.style.display  = 'none';
-      grid.style.display      = 'none';
-      priceView.style.display = 'flex';
-      sidebar.style.display   = 'none';
+      overview.style.display        = 'none';
+      grid.style.display            = 'none';
+      priceView.style.display       = 'flex';
+      bestValueView.style.display   = 'none';
+      sidebar.style.display         = 'none';
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
       setOwnershipVisibility(false);
       buildRarityPriceGrid();
       renderPriceCards();
+    }
+
+    // ── Best Value tab ──────────────────────────────────────
+    function renderBestValueList(containerId, items) {
+      const el = document.getElementById(containerId);
+      if (!items || !items.length) {
+        el.innerHTML = '<p style="color:#888;padding:16px">데이터 없음 (build_prices.py를 실행하세요)</p>';
+        return;
+      }
+      el.innerHTML = items.map((e, i) => {
+        const pct      = Math.round(e.value_ratio * 100);
+        const bar      = Math.min(pct, 100);
+        const barColor = pct <= 60 ? '#2e7d32' : pct <= 85 ? '#f57f17' : '#c62828';
+        const displayName = cardNamesJa[e.src] || e.name_ja || e.name_kr || e.src.split('/').pop();
+        const rarityColor = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#555', SEC:'#ad1457', PR:'#00838f' };
+        const rc = rarityColor[e.rarity] || '#555';
+        return `
+          <div class="bv-card" onclick="openModalBySrc('${e.src}')">
+            <div class="bv-rank">#${i+1}</div>
+            <div class="bv-img"><img src="${e.src}" loading="lazy"></div>
+            <div class="bv-info">
+              <div class="bv-name">
+                <span class="bv-rarity" style="color:${rc}">${e.rarity}</span>
+                ${displayName}
+              </div>
+              <div class="bv-prices">
+                <span class="bv-price">¥${e.price.toLocaleString()}</span>
+                <span class="bv-avg">평균 ¥${e.rarity_avg.toLocaleString()}</span>
+              </div>
+              <div class="bv-bar-wrap">
+                <div class="bv-bar-fill" style="width:${bar}%;background:${barColor}"></div>
+              </div>
+              <div class="bv-pct">${pct}% of avg</div>
+              <div class="bv-title">${e.title}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function showBestValue(btn) {
+      viewMode = 'bestvalue';
+      clearActive('.top-left button');
+      btn.classList.add('active');
+      overview.style.display        = 'none';
+      grid.style.display            = 'none';
+      priceView.style.display       = 'none';
+      bestValueView.style.display   = 'block';
+      sidebar.style.display         = 'none';
+      document.getElementById('collTopBar').style.display    = 'none';
+      document.getElementById('collSeasonNav').style.display = 'none';
+      setOwnershipVisibility(false);
+
+      const sold   = (typeof TOP_VALUE_SOLD   !== 'undefined') ? TOP_VALUE_SOLD   : [];
+      const listed = (typeof TOP_VALUE_LISTED !== 'undefined') ? TOP_VALUE_LISTED : [];
+      renderBestValueList('bvSold',   sold);
+      renderBestValueList('bvListed', listed);
+    }
+
+    function openModalBySrc(src) {
+      const c = CARDS.find(x => x.src === src);
+      if (c) openModal(c);
     }
 
     function setPriceSeason(s, btn) {
@@ -826,6 +915,223 @@
     function closeModal(e) {
       if (e.target.id === 'cardModal') e.target.style.display = 'none';
     }
+
+    // ── Auto-fetch Japanese card names ──────────────────────
+    //
+    // Tries (in order):
+    //   1. Same-origin  /card_names_ja.json  (generated by scrape_card_names.py)
+    //   2. Direct fetch https://zutomayocard.net/gallery/  (sends browser cookies)
+    //   3. CORS proxy   https://corsproxy.io/  (fallback if CORS blocked)
+    //
+    // Results are cached in localStorage for NAMES_TTL ms.
+    // On refresh the Best Value view re-renders with Japanese names.
+
+    const NAMES_CACHE_KEY = 'zc_names_ja_v1';
+    const NAMES_TTL       = 24 * 60 * 60 * 1000;  // 24 h
+    const GALLERY_URL     = 'https://zutomayocard.net/gallery/';
+
+    // In-memory map: card src → Japanese name (populated on load)
+    let cardNamesJa = {};
+
+    // Parse card names out of raw HTML/text from the gallery page.
+    // Handles multiple common site layouts.
+    function parseGalleryText(text) {
+      const out = {};
+
+      // ── Pattern A: wiki-style "第一弾【9 / 104】 にらちゃん(…)"
+      const wikiRe = /第([一二三四1-4])弾\s*[【\[]\s*(\d{1,3})\s*\/\s*\d+\s*[】\]]\s*([^\n\r<|【\[]{2,60})/g;
+      const seasonMap = {'一':'1','二':'2','三':'3','四':'4','1':'1','2':'2','3':'3','4':'4'};
+      const seasonFile = {'1':'1st','2':'2nd','3':'3rd','4':'4th'};
+      let m;
+      while ((m = wikiRe.exec(text)) !== null) {
+        const season = seasonMap[m[1]];
+        const num    = parseInt(m[2], 10);
+        const name   = m[3].replace(/\s*[|｜].*$/, '').replace(/<.*$/, '').trim();
+        if (season && num >= 1 && num <= 200 && name.length >= 2 && seasonFile[season]) {
+          out[`cards/zutomayocard_${seasonFile[season]}_${num}.png`] = name;
+        }
+      }
+
+      // ── Pattern B: scan JSON blobs embedded in the page
+      //    (Next.js / Nuxt / SvelteKit inline __INITIAL_STATE__ etc.)
+      const jsonRe = /(?:__NUXT__|__INITIAL_STATE__|__props__|window\.__data__)\s*=\s*(\{[\s\S]{50,})/gi;
+      while ((m = jsonRe.exec(text)) !== null) {
+        try {
+          const data = JSON.parse(m[1]);
+          _extractJsonNames(data, out, null);
+        } catch (_) { /* truncated JSON — skip */ }
+      }
+
+      // ── Pattern C: look for JSON arrays that look like card lists
+      //    e.g.  [{"name":"にらちゃん…","number":1,"season":1},…]
+      const arrRe = /\[\s*\{\s*"[^"]+"\s*:/g;
+      while ((m = arrRe.exec(text)) !== null) {
+        try {
+          const slice = text.slice(m.index);
+          const end   = _findJsonEnd(slice);
+          if (end > 0) {
+            const data = JSON.parse(slice.slice(0, end));
+            _extractJsonNames(data, out, null);
+          }
+        } catch (_) { /* ignore */ }
+      }
+
+      return out;
+    }
+
+    // Find the closing bracket of the first complete JSON array/object.
+    function _findJsonEnd(s) {
+      let depth = 0, inStr = false, esc = false;
+      for (let i = 0; i < s.length; i++) {
+        const c = s[i];
+        if (esc)          { esc = false; continue; }
+        if (c === '\\')   { esc = true;  continue; }
+        if (c === '"')    { inStr = !inStr; continue; }
+        if (inStr)        continue;
+        if (c === '{' || c === '[') depth++;
+        if (c === '}' || c === ']') { depth--; if (depth === 0) return i + 1; }
+      }
+      return -1;
+    }
+
+    const _nameKeys   = ['name','card_name','cardName','name_ja','jp_name','title'];
+    const _numKeys    = ['number','no','card_no','cardNumber','num'];
+    const _seasonKeys = ['season','vol','volume','set','dan'];
+    const _sfMap      = {'1':'1st','2':'2nd','3':'3rd','4':'4th'};
+    const _scMap      = {'一':'1','二':'2','三':'3','四':'4','1':'1','2':'2','3':'3','4':'4'};
+
+    function _extractJsonNames(data, out, seasonHint, depth = 0) {
+      if (depth > 10) return;
+      if (Array.isArray(data)) {
+        for (const item of data) _extractJsonNames(item, out, seasonHint, depth + 1);
+        return;
+      }
+      if (typeof data !== 'object' || data === null) return;
+
+      let name = null, num = null, season = seasonHint;
+      for (const k of _nameKeys)   { if (typeof data[k] === 'string' && data[k].length >= 2) { name = data[k]; break; } }
+      for (const k of _numKeys)    { const v = parseInt(data[k]); if (v >= 1 && v <= 200) { num = v; break; } }
+      for (const k of _seasonKeys) {
+        const v = String(data[k] ?? '').trim();
+        const s = _scMap[v] || _scMap[v[0]];
+        if (s) { season = s; break; }
+        if (['1','2','3','4'].includes(v)) { season = v; break; }
+        if (['1st','2nd','3rd','4th'].includes(v)) { season = v[0]; break; }
+      }
+
+      if (name && num && season && _sfMap[season]) {
+        out[`cards/zutomayocard_${_sfMap[season]}_${num}.png`] = name;
+      }
+
+      for (const v of Object.values(data)) {
+        if (typeof v === 'object' && v !== null) _extractJsonNames(v, out, season, depth + 1);
+      }
+    }
+
+    // Apply loaded names: update cardNamesJa, refresh Best Value if open.
+    function applyCardNames(names) {
+      if (!names || !Object.keys(names).length) return;
+      cardNamesJa = names;
+      // Update TOP_VALUE_SOLD / TOP_VALUE_LISTED name_ja fields in memory
+      const lists = [
+        typeof TOP_VALUE_SOLD   !== 'undefined' ? TOP_VALUE_SOLD   : [],
+        typeof TOP_VALUE_LISTED !== 'undefined' ? TOP_VALUE_LISTED : [],
+      ];
+      for (const list of lists) {
+        for (const e of list) {
+          if (cardNamesJa[e.src]) e.name_ja = cardNamesJa[e.src];
+        }
+      }
+      // Re-render if the best value tab is currently visible
+      if (viewMode === 'bestvalue') {
+        renderBestValueList('bvSold',   typeof TOP_VALUE_SOLD   !== 'undefined' ? TOP_VALUE_SOLD   : []);
+        renderBestValueList('bvListed', typeof TOP_VALUE_LISTED !== 'undefined' ? TOP_VALUE_LISTED : []);
+      }
+    }
+
+    // Show a small toast in the corner.
+    function showToast(msg, type = 'info') {
+      let el = document.getElementById('namesToast');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'namesToast';
+        el.style.cssText = `position:fixed;bottom:18px;right:18px;padding:9px 16px;border-radius:8px;
+          font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;
+          background:${type==='ok'?'#2e7d32':type==='err'?'#b71c1c':'#1a237e'};color:#fff;
+          box-shadow:0 3px 10px rgba(0,0,0,.25);max-width:280px;`;
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.style.opacity = '1';
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.style.opacity = '0'; }, 3500);
+    }
+
+    async function fetchAndCacheNames() {
+      // 1. Check localStorage cache first
+      try {
+        const cached = JSON.parse(localStorage.getItem(NAMES_CACHE_KEY) || 'null');
+        if (cached && cached.ts && (Date.now() - cached.ts) < NAMES_TTL && cached.data) {
+          const count = Object.keys(cached.data).length;
+          if (count > 10) {
+            applyCardNames(cached.data);
+            console.log(`[ZC] Loaded ${count} JP names from cache (age ${Math.round((Date.now()-cached.ts)/3600000)}h)`);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // 2. Try same-origin /card_names_ja.json (generated by scrape_card_names.py)
+      try {
+        const r = await fetch('./card_names_ja.json', { cache: 'no-cache' });
+        if (r.ok) {
+          const raw = await r.json();
+          // Format: {src: {name_ja, season, number}}  →  extract name_ja per src
+          const names = {};
+          for (const [src, info] of Object.entries(raw)) {
+            if (info.name_ja) names[src] = info.name_ja;
+          }
+          if (Object.keys(names).length > 10) {
+            localStorage.setItem(NAMES_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: names }));
+            applyCardNames(names);
+            showToast(`일본어 카드명 ${Object.keys(names).length}개 로드됨`, 'ok');
+            console.log(`[ZC] Loaded ${Object.keys(names).length} JP names from /card_names_ja.json`);
+            return;
+          }
+        }
+      } catch (_) {}
+
+      // 3. Try direct fetch from gallery (works if user's browser has the cookies/auth)
+      for (const url of [
+        GALLERY_URL,
+        `https://corsproxy.io/?url=${encodeURIComponent(GALLERY_URL)}`,
+      ]) {
+        try {
+          const r = await fetch(url, {
+            credentials: 'include',
+            signal: AbortSignal.timeout(12_000),
+          });
+          if (!r.ok) continue;
+          const text  = await r.text();
+          const names = parseGalleryText(text);
+          const count = Object.keys(names).length;
+          if (count > 10) {
+            localStorage.setItem(NAMES_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: names }));
+            applyCardNames(names);
+            showToast(`일본어 카드명 ${count}개 로드됨`, 'ok');
+            console.log(`[ZC] Loaded ${count} JP names from ${url}`);
+            return;
+          }
+        } catch (_) {}
+      }
+
+      console.log('[ZC] Could not load JP card names (run scrape_card_names.py to generate card_names_ja.json)');
+    }
+
+    // Run after a short delay so it never blocks initial render
+    window.addEventListener('load', () => {
+      setTimeout(fetchAndCacheNames, 1500);
+    });
   </script>
 
 </body>
