@@ -33,6 +33,7 @@
               <span id="importFeedback"></span>
             </div>
           </div>
+          <button class="code-btn clear-btn" onclick="clearAll()">전체 초기화</button>
           <button class="code-btn print-btn" onclick="printCollection()">PDF 출력</button>
         </div>
       </div>
@@ -490,6 +491,14 @@
       const open = area.style.display === 'none';
       area.style.display = open ? 'flex' : 'none';
       if (open) document.getElementById('codeInput').focus();
+    }
+
+    function clearAll() {
+      if (!confirm('모든 보유 카드를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+      ownedCards = new Map();
+      saveOwned();
+      buildProgress();
+      renderCards();
     }
 
     function importCode() {
