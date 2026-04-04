@@ -15,6 +15,7 @@
       <button onclick="showSeason('3', this)">시즌3</button>
       <button onclick="showSeason('4', this)">시즌4</button>
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
+      <button class="summary-tab" onclick="showSummary(this)">요약</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
       <!-- Progress + save code (collection mode only) -->
       <div id="collTopBar" style="display:none">
@@ -104,6 +105,9 @@
       </div>
 
   </div>
+
+  <!-- Summary view -->
+  <div id="summaryView" style="display:none"></div>
 
   <!-- 모달 -->
   <div id="cardModal" class="modal" onclick="closeModal(event)">
@@ -307,6 +311,10 @@
       document.querySelectorAll(sel).forEach(b => b.classList.remove('active'));
     }
 
+    function hideSummary() {
+      document.getElementById('summaryView').style.display = 'none';
+    }
+
     function hideCompareUI() {
       compareCards = null;
       compareFilter = 'all';
@@ -316,6 +324,7 @@
 
     function showOverview(btn) {
       viewMode = 'overview';
+      hideSummary();
       hideCompareUI();
       clearActive('.top-left button');
       btn.classList.add('active');
@@ -332,6 +341,7 @@
 
     function showSeason(season, btn) {
       viewMode = 'browse';
+      hideSummary();
       hideCompareUI();
       clearActive('.top-left button');
       btn.classList.add('active');
@@ -348,6 +358,7 @@
 
     function showCollection(btn) {
       viewMode = 'collection';
+      hideSummary();
       sidebar.style.display       = '';
       clearActive('.top-left button');
       btn.classList.add('active');
@@ -857,6 +868,174 @@
       const w = window.open('', '_blank');
       w.document.write(html);
       w.document.close();
+    }
+
+    // ── Summary view ────────────────────────────────────────
+    function cardNum(src) {
+      const m = src.match(/_(\d+)\.png$/);
+      return m ? parseInt(m[1], 10) : 0;
+    }
+
+    function showSummary(btn) {
+      viewMode = 'summary';
+      hideCompareUI();
+      clearActive('.top-left button');
+      btn.classList.add('active');
+      overview.style.display = 'none';
+      grid.style.display     = 'none';
+      sidebar.style.display  = 'none';
+      document.getElementById('collTopBar').style.display    = 'none';
+      document.getElementById('collSeasonNav').style.display = 'none';
+      setOwnershipVisibility(false);
+      renderSummary();
+    }
+
+    function renderSummary() {
+      const el = document.getElementById('summaryView');
+      el.style.display = 'block';
+
+      const RARITIES  = ['UR','SR','R','N','SE'];
+      const RC = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#666', SE:'#ad1457' };
+      const SEASONS = ['1','2','3','4'];
+
+      // ── Global stats ──
+      const totalCards  = CARDS.length;
+      const ownedUnique = CARDS.filter(c => isOwned(c.src)).length;
+      const totalCopies = [...ownedCards.values()].reduce((a, b) => a + b, 0);
+      const duplicates  = totalCopies - ownedUnique;
+      const pct         = Math.round(ownedUnique / totalCards * 100);
+
+      // ── Per-season rarity breakdown ──
+      const seasonTable = SEASONS.map(s => {
+        const sc = CARDS.filter(c => c.season === s);
+        const rows = RARITIES.map(r => {
+          const total = sc.filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC')).length;
+          if (total === 0) return null;
+          const owned = sc.filter(c => (c.rarity === r || (r === 'SE' && c.rarity === 'SEC')) && isOwned(c.src)).length;
+          const pct   = Math.round(owned / total * 100);
+          const bar   = `<span class="sv-bar"><span class="sv-bar-fill" style="width:${pct}%;background:${RC[r]}"></span></span>`;
+          return `<tr>
+            <td><span class="sv-rarity" style="color:${RC[r]}">${r}</span></td>
+            <td class="sv-frac">${owned}<span class="sv-total">/${total}</span></td>
+            <td>${bar}</td>
+            <td class="sv-pct ${pct === 100 ? 'sv-complete' : ''}">${pct}%</td>
+          </tr>`;
+        }).filter(Boolean).join('');
+
+        const sOwned = sc.filter(c => isOwned(c.src)).length;
+        const sPct   = Math.round(sOwned / sc.length * 100);
+        return `<div class="sv-season-block">
+          <div class="sv-season-head">
+            <span class="sv-season-label">시즌 ${s}</span>
+            <span class="sv-season-frac">${sOwned} / ${sc.length}</span>
+            <span class="sv-season-pct ${sPct === 100 ? 'sv-complete' : ''}">${sPct}%</span>
+          </div>
+          <table class="sv-table"><tbody>${rows}</tbody></table>
+        </div>`;
+      }).join('');
+
+      // ── Owned card list, grouped by season ──
+      const cardList = SEASONS.map(s => {
+        const owned = CARDS
+          .filter(c => c.season === s && isOwned(c.src))
+          .sort((a, b) => cardNum(a.src) - cardNum(b.src));
+        if (owned.length === 0) return '';
+
+        const items = owned.map(c => {
+          const n   = cardNum(c.src);
+          const cnt = getCount(c.src);
+          const dup = cnt > 1;
+          return `<span class="sv-chip ${dup ? 'sv-chip-dup' : ''}" style="border-color:${RC[c.rarity] || '#999'}" title="${c.name}">
+            S${s}-${String(n).padStart(3,'0')}${dup ? ` ×${cnt}` : ''}
+          </span>`;
+        }).join('');
+
+        return `<div class="sv-chip-group">
+          <div class="sv-chip-season">시즌 ${s}</div>
+          <div class="sv-chips">${items}</div>
+        </div>`;
+      }).join('');
+
+      // ── Duplicates list ──
+      let dupSection = '';
+      const dups = CARDS.filter(c => getCount(c.src) > 1)
+        .sort((a, b) => (b.rarity < a.rarity ? -1 : 1) || cardNum(a.src) - cardNum(b.src));
+      if (dups.length > 0) {
+        const dupItems = dups.map(c => {
+          const n   = cardNum(c.src);
+          const cnt = getCount(c.src);
+          return `<div class="sv-dup-row">
+            <span class="sv-rarity" style="color:${RC[c.rarity] || '#999'}">${c.rarity}</span>
+            <span class="sv-dup-id">S${c.season}-${String(n).padStart(3,'0')}</span>
+            <span class="sv-dup-name">${c.name}</span>
+            <span class="sv-dup-cnt">×${cnt}</span>
+          </div>`;
+        }).join('');
+        dupSection = `<section class="sv-section">
+          <h2 class="sv-section-title">여분 카드 <span class="sv-badge">${dups.length}종</span></h2>
+          <div class="sv-dup-list">${dupItems}</div>
+        </section>`;
+      }
+
+      // ── Missing card list ──
+      const missing = CARDS.filter(c => !isOwned(c.src));
+      const missByRarity = RARITIES.map(r => {
+        const cards = missing.filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC'));
+        if (!cards.length) return '';
+        const chips = cards.sort((a,b) => cardNum(a.src) - cardNum(b.src)).map(c =>
+          `<span class="sv-chip sv-chip-miss" title="${c.name}">S${c.season}-${String(cardNum(c.src)).padStart(3,'0')}</span>`
+        ).join('');
+        return `<div class="sv-miss-rarity">
+          <span class="sv-rarity sv-miss-r" style="color:${RC[r]}">${r} (${cards.length})</span>
+          <div class="sv-chips">${chips}</div>
+        </div>`;
+      }).filter(Boolean).join('');
+      const missingSection = missing.length > 0 ? `<section class="sv-section">
+        <h2 class="sv-section-title">미보유 카드 <span class="sv-badge sv-badge-miss">${missing.length}장</span></h2>
+        <div class="sv-miss-list">${missByRarity}</div>
+      </section>` : `<section class="sv-section"><p class="sv-complete-msg">모든 카드를 보유하고 있습니다!</p></section>`;
+
+      el.innerHTML = `
+        <div class="sv-wrap">
+
+          <header class="sv-header">
+            <div class="sv-hero">
+              <span class="sv-hero-num">${ownedUnique}<span class="sv-hero-den"> / ${totalCards}</span></span>
+              <span class="sv-hero-label">보유 카드</span>
+            </div>
+            <div class="sv-hero-bar-wrap">
+              <div class="sv-hero-bar" style="width:${pct}%"></div>
+            </div>
+            <div class="sv-meta">
+              <span class="sv-meta-item"><strong>${pct}%</strong> 완성</span>
+              <span class="sv-meta-sep">·</span>
+              <span class="sv-meta-item">총 <strong>${totalCopies}</strong>장 보유</span>
+              ${duplicates > 0 ? `<span class="sv-meta-sep">·</span><span class="sv-meta-item sv-meta-dup"><strong>${duplicates}</strong>장 여분</span>` : ''}
+            </div>
+          </header>
+
+          <section class="sv-section sv-section-grid">
+            <h2 class="sv-section-title">시즌별 수집 현황</h2>
+            <div class="sv-season-grid">${seasonTable}</div>
+          </section>
+
+          <section class="sv-section">
+            <h2 class="sv-section-title">보유 카드 목록</h2>
+            <div class="sv-legend">
+              <span class="sv-chip" style="border-color:#b8860b">UR</span>
+              <span class="sv-chip" style="border-color:#7b5ea7">SR</span>
+              <span class="sv-chip" style="border-color:#1565c0">R</span>
+              <span class="sv-chip" style="border-color:#666">N</span>
+              <span class="sv-chip" style="border-color:#ad1457">SE</span>
+              <span class="sv-chip sv-chip-dup" style="border-color:#e65100">여분 ×N</span>
+            </div>
+            ${cardList || '<p class="sv-empty">보유 카드가 없습니다</p>'}
+          </section>
+
+          ${dupSection}
+          ${missingSection}
+
+        </div>`;
     }
 
     // ── Modal ───────────────────────────────────────────────

@@ -468,6 +468,297 @@ button.active {
   line-height: 1.8;
 }
 
+/* ── Summary tab button ─────────────────────────────────── */
+.summary-tab {
+  background: #263238;
+  color: #cfd8dc;
+  border: none !important;
+}
+.summary-tab.active,
+.summary-tab:hover {
+  background: #37474f !important;
+  color: #fff !important;
+}
+
+/* ── Summary view wrapper ───────────────────────────────── */
+.sv-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+  font-family: 'Hiragino Sans', 'Noto Sans KR', sans-serif;
+}
+
+/* ── Hero stats ─────────────────────────────────────────── */
+.sv-header {
+  margin-bottom: 36px;
+  padding: 24px 28px;
+  background: #1a1a2e;
+  border-radius: 14px;
+  color: #e0e0ff;
+}
+
+.sv-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.sv-hero-num {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+}
+.sv-hero-den {
+  font-size: 26px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+}
+.sv-hero-label {
+  font-size: 14px;
+  color: rgba(255,255,255,0.55);
+  margin-left: 4px;
+}
+
+.sv-hero-bar-wrap {
+  height: 6px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.sv-hero-bar {
+  height: 100%;
+  background: #69f0ae;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.sv-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+}
+.sv-meta-sep { opacity: 0.4; }
+.sv-meta-item strong { color: #e0e0ff; }
+.sv-meta-dup strong  { color: #ffab40; }
+
+/* ── Sections ───────────────────────────────────────────── */
+.sv-section {
+  margin-bottom: 32px;
+}
+.sv-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #888;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sv-badge {
+  background: #1a1a2e;
+  color: #e0e0ff;
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.sv-badge-miss {
+  background: #b71c1c;
+}
+
+/* ── Season breakdown grid ──────────────────────────────── */
+.sv-season-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.sv-season-block {
+  background: #f9f9fb;
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.sv-season-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.sv-season-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+.sv-season-frac {
+  font-size: 12px;
+  color: #666;
+  flex: 1;
+}
+.sv-season-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+}
+
+.sv-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+.sv-table td {
+  padding: 3px 0;
+  vertical-align: middle;
+}
+.sv-table td:last-child { text-align: right; }
+
+.sv-rarity {
+  font-size: 11px;
+  font-weight: 900;
+  display: inline-block;
+  width: 24px;
+}
+.sv-frac {
+  font-weight: 700;
+  color: #1a1a2e;
+  padding: 0 8px;
+}
+.sv-total { color: #bbb; font-weight: 400; }
+
+.sv-bar {
+  display: inline-block;
+  width: 70px;
+  height: 5px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.sv-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.sv-pct { color: #888; font-size: 11px; }
+.sv-complete { color: #2e7d32 !important; font-weight: 800 !important; }
+
+/* ── Chip-based card list ───────────────────────────────── */
+.sv-legend {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.sv-chip-group {
+  margin-bottom: 12px;
+}
+.sv-chip-season {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.sv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.sv-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: monospace;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1.5px solid #ddd;
+  color: #444;
+  background: #fff;
+  white-space: nowrap;
+  cursor: default;
+}
+.sv-chip-dup {
+  background: #fff8f3;
+  color: #e65100;
+  border-color: #e65100;
+}
+.sv-chip-miss {
+  background: #f5f5f5;
+  color: #bbb;
+  border-color: #ddd;
+}
+
+.sv-empty {
+  color: #bbb;
+  font-size: 13px;
+}
+
+/* ── Duplicates list ────────────────────────────────────── */
+.sv-dup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sv-dup-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  background: #fff8f3;
+  border-left: 3px solid #e65100;
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+}
+.sv-dup-id {
+  font-family: monospace;
+  font-weight: 700;
+  color: #1a1a2e;
+  min-width: 70px;
+}
+.sv-dup-name {
+  color: #555;
+  flex: 1;
+}
+.sv-dup-cnt {
+  font-weight: 800;
+  color: #e65100;
+}
+
+/* ── Missing cards ──────────────────────────────────────── */
+.sv-miss-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sv-miss-rarity {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.sv-miss-r {
+  min-width: 52px;
+  margin-top: 3px;
+}
+
+.sv-complete-msg {
+  color: #2e7d32;
+  font-weight: 700;
+  font-size: 14px;
+}
+
 /* ── Compare banner ─────────────────────────────────────── */
 #compareBanner {
   display: flex;
