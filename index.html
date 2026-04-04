@@ -24,10 +24,11 @@
           <button class="code-btn" onclick="shareLink()">링크 복사</button>
           <span id="copyFeedback"></span>
           <div class="import-wrap">
-            <button class="code-btn" onclick="toggleImport()">코드 입력</button>
-            <div id="importArea" style="display:none">
-              <input id="codeInput" type="text" spellcheck="false" placeholder="저장 코드 붙여넣기" />
-              <button class="code-btn apply-btn" onclick="applyCode()">적용</button>
+            <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
+            <div id="compareInputArea" style="display:none">
+              <input id="codeInput" type="text" spellcheck="false" placeholder="상대방 코드 붙여넣기" />
+              <button class="code-btn apply-btn" onclick="startCompare()">비교</button>
+              <button class="code-btn" onclick="importCode()">가져오기</button>
               <span id="importFeedback"></span>
             </div>
           </div>
@@ -37,12 +38,29 @@
     </div>
   </header>
 
-  <!-- Shared collection banner -->
-  <div id="sharedBanner" style="display:none">
-    <span class="shared-label">공유된 컬렉션을 보는 중입니다 (읽기 전용)</span>
+  <!-- Compare mode banner -->
+  <div id="compareBanner" style="display:none">
+    <span class="shared-label">컬렉션 비교 중</span>
+    <div class="compare-stats" id="compareStats"></div>
     <div class="shared-actions">
-      <button class="code-btn apply-btn" onclick="importShared()">내 컬렉션으로 가져오기</button>
-      <button class="code-btn" onclick="exitSharedView()">내 컬렉션으로 돌아가기</button>
+      <button class="code-btn" id="compareFilterBtn" onclick="cycleCompareFilter()">전체 보기</button>
+      <button class="code-btn" onclick="exitCompare()">비교 종료</button>
+    </div>
+  </div>
+
+  <!-- Trade summary panel -->
+  <div id="tradeSummary" style="display:none">
+    <div class="trade-section">
+      <h3 class="trade-title trade-need">상대방이 보유 &rarr; 내가 필요</h3>
+      <div class="trade-cards" id="tradeNeed"></div>
+    </div>
+    <div class="trade-section">
+      <h3 class="trade-title trade-offer">내 여분 &rarr; 상대방이 필요</h3>
+      <div class="trade-cards" id="tradeOffer"></div>
+    </div>
+    <div class="trade-section" id="tradeMatchSection" style="display:none">
+      <h3 class="trade-title trade-match">교환 추천</h3>
+      <div class="trade-matches" id="tradeMatches"></div>
     </div>
   </div>
 
@@ -107,8 +125,8 @@
     let currentRarity    = 'all';
     let currentType      = 'all';
     let currentOwnership = 'all';
-    let isSharedView     = false;
-    let savedOwnedCards  = null;
+    let compareCards      = null;   // Map<src, count> of the other user
+    let compareFilter     = 'all';  // 'all' | 'need' | 'offer' | 'both'
 
     let ownedCards = (() => {
       const raw = JSON.parse(localStorage.getItem('zc_owned') || 'null');
@@ -132,6 +150,7 @@
     // ── Render ─────────────────────────────────────────────
     function renderCards() {
       const isCollView   = viewMode === 'collection';
+      const isCompare    = isCollView && compareCards !== null;
       const activeSeason = isCollView ? collSeason : currentSeason;
       const frag = document.createDocumentFragment();
 
@@ -139,10 +158,25 @@
         if (activeSeason !== 'all' && c.season !== activeSeason) continue;
         if (currentRarity    !== 'all' && c.rarity !== currentRarity) continue;
         if (currentType      !== 'all' && c.type   !== currentType)   continue;
-        const count = getCount(c.src);
-        const owned = count > 0;
-        if (currentOwnership === 'owned'   && !owned) continue;
-        if (currentOwnership === 'unowned' &&  owned) continue;
+        const myCount    = getCount(c.src);
+        const owned      = myCount > 0;
+        const theirCount = isCompare ? (compareCards.get(c.src) || 0) : 0;
+
+        // ownership filter (non-compare)
+        if (!isCompare) {
+          if (currentOwnership === 'owned'   && !owned) continue;
+          if (currentOwnership === 'unowned' &&  owned) continue;
+        }
+
+        // compare filter
+        if (isCompare) {
+          const iNeed    = theirCount > 0 && myCount === 0;
+          const iOffer   = myCount > 1 && theirCount === 0;
+          const bothHave = myCount > 0 && theirCount > 0;
+          if (compareFilter === 'need'  && !iNeed)    continue;
+          if (compareFilter === 'offer' && !iOffer)   continue;
+          if (compareFilter === 'both'  && !bothHave) continue;
+        }
 
         const wrap = document.createElement('div');
         wrap.className = 'card-wrap' + (isCollView ? (owned ? ' owned' : ' unowned') : '');
@@ -152,8 +186,33 @@
         img.className = 'card';
         wrap.appendChild(img);
 
-        if (isCollView && !isSharedView) {
-          // count stepper badge: [−][N][+]
+        if (isCompare) {
+          // Compare mode: show dual badge [me:N / them:N] with color coding
+          const iNeed  = theirCount > 0 && myCount === 0;
+          const iOffer = myCount > 1 && theirCount === 0;
+
+          let cls = 'cmp-badge';
+          if (iNeed)       cls += ' cmp-need';
+          else if (iOffer) cls += ' cmp-offer';
+          else if (myCount > 0 && theirCount > 0) cls += ' cmp-both';
+
+          const badge = document.createElement('div');
+          badge.className = cls;
+          badge.innerHTML = `<span class="cmp-me">${myCount}</span><span class="cmp-sep">/</span><span class="cmp-them">${theirCount}</span>`;
+          wrap.appendChild(badge);
+
+          // bottom label for trade status
+          if (iNeed || iOffer) {
+            const tag = document.createElement('div');
+            tag.className = 'cmp-tag ' + (iNeed ? 'cmp-tag-need' : 'cmp-tag-offer');
+            tag.textContent = iNeed ? '필요' : '여분';
+            wrap.appendChild(tag);
+          }
+
+          wrap.onclick = () => openModal(c);
+
+        } else if (isCollView) {
+          // Normal collection edit mode: count stepper badge [−][N][+]
           const badge = document.createElement('div');
           badge.className = 'count-badge';
 
@@ -176,7 +235,7 @@
 
           const num = document.createElement('span');
           num.className = 'cnt-num';
-          num.textContent = count || '';
+          num.textContent = myCount || '';
 
           const inc = document.createElement('button');
           inc.className = 'cnt-btn';
@@ -197,7 +256,6 @@
           badge.append(dec, num, inc);
           wrap.appendChild(badge);
 
-          // click card body = enable (set count 1) if not already owned
           wrap.onclick = () => {
             if (!isOwned(c.src)) {
               ownedCards.set(c.src, 1);
@@ -207,13 +265,6 @@
               updateProgress();
             }
           };
-        } else if (isCollView && isSharedView) {
-          // shared view: click opens modal (read-only)
-          const mark = document.createElement('span');
-          mark.className = 'owned-mark';
-          mark.textContent = '✓';
-          wrap.appendChild(mark);
-          wrap.onclick = () => openModal(c);
         } else {
           wrap.onclick = () => openModal(c);
         }
@@ -256,8 +307,16 @@
       document.querySelectorAll(sel).forEach(b => b.classList.remove('active'));
     }
 
+    function hideCompareUI() {
+      compareCards = null;
+      compareFilter = 'all';
+      document.getElementById('compareBanner').style.display  = 'none';
+      document.getElementById('tradeSummary').style.display   = 'none';
+    }
+
     function showOverview(btn) {
       viewMode = 'overview';
+      hideCompareUI();
       clearActive('.top-left button');
       btn.classList.add('active');
       clearActive('.sidebar button');
@@ -273,6 +332,7 @@
 
     function showSeason(season, btn) {
       viewMode = 'browse';
+      hideCompareUI();
       clearActive('.top-left button');
       btn.classList.add('active');
       overview.style.display        = 'none';
@@ -414,68 +474,205 @@
         .then(() => showFeedback('copyFeedback', '링크 복사됨! ✓', 'feedback-ok'));
     }
 
-    function toggleImport() {
-      const area = document.getElementById('importArea');
+    function toggleCompareInput() {
+      const area = document.getElementById('compareInputArea');
       const open = area.style.display === 'none';
       area.style.display = open ? 'flex' : 'none';
       if (open) document.getElementById('codeInput').focus();
     }
 
-    function applyCode() {
+    function importCode() {
       const input = document.getElementById('codeInput');
+      if (!input.value.trim()) return;
+      if (!confirm('현재 컬렉션을 이 코드로 덮어쓰시겠습니까?')) return;
       try {
         ownedCards = decodeCollection(input.value);
         saveOwned();
         input.value = '';
-        document.getElementById('importArea').style.display = 'none';
+        document.getElementById('compareInputArea').style.display = 'none';
         buildProgress();
+        renderCards();
+        showFeedback('copyFeedback', '가져오기 완료! ✓', 'feedback-ok');
+      } catch (e) {
+        showFeedback('importFeedback', '잘못된 코드', 'feedback-err');
+      }
+    }
+
+    // ── Compare mode ────────────────────────────────────────
+    function startCompare() {
+      const input = document.getElementById('codeInput');
+      try {
+        compareCards = decodeCollection(input.value);
+        compareFilter = 'all';
+        input.value = '';
+        document.getElementById('compareInputArea').style.display = 'none';
+        document.getElementById('compareBanner').style.display = 'flex';
+        document.getElementById('tradeSummary').style.display = 'flex';
+        updateCompareStats();
+        buildTradeSummary();
         renderCards();
       } catch (e) {
         showFeedback('importFeedback', '잘못된 코드', 'feedback-err');
       }
     }
 
-    // ── Shared view ─────────────────────────────────────────
-    function enterSharedView(code) {
+    function enterCompare(code) {
       try {
-        savedOwnedCards = new Map(ownedCards);
-        ownedCards = decodeCollection(code);
-        isSharedView = true;
-        document.getElementById('sharedBanner').style.display = 'flex';
+        compareCards = decodeCollection(code);
+        compareFilter = 'all';
         showCollection(document.querySelector('.collection-tab'));
+        document.getElementById('compareBanner').style.display = 'flex';
+        document.getElementById('tradeSummary').style.display = 'flex';
+        updateCompareStats();
+        buildTradeSummary();
+        renderCards();
       } catch (e) {
         history.replaceState(null, '', location.pathname);
       }
     }
 
-    function importShared() {
-      // keep shared collection as own
-      saveOwned();
-      savedOwnedCards = null;
-      isSharedView = false;
-      document.getElementById('sharedBanner').style.display = 'none';
+    function exitCompare() {
+      compareCards = null;
+      compareFilter = 'all';
+      document.getElementById('compareBanner').style.display = 'none';
+      document.getElementById('tradeSummary').style.display = 'none';
       history.replaceState(null, '', location.pathname);
-      buildProgress();
       renderCards();
     }
 
-    function exitSharedView() {
-      ownedCards = savedOwnedCards;
-      savedOwnedCards = null;
-      isSharedView = false;
-      document.getElementById('sharedBanner').style.display = 'none';
-      history.replaceState(null, '', location.pathname);
-      buildProgress();
+    const COMPARE_FILTERS = [
+      { key: 'all',   label: '전체 보기' },
+      { key: 'need',  label: '내가 필요한 것' },
+      { key: 'offer', label: '내 여분 (교환 가능)' },
+      { key: 'both',  label: '둘 다 보유' },
+    ];
+
+    function cycleCompareFilter() {
+      const idx = COMPARE_FILTERS.findIndex(f => f.key === compareFilter);
+      const next = COMPARE_FILTERS[(idx + 1) % COMPARE_FILTERS.length];
+      compareFilter = next.key;
+      document.getElementById('compareFilterBtn').textContent = next.label;
       renderCards();
     }
 
-    // ── On load: check for shared link ──────────────────────
+    function updateCompareStats() {
+      let iNeed = 0, iOffer = 0, bothHave = 0;
+      for (const c of CARDS) {
+        const my    = getCount(c.src);
+        const their = compareCards.get(c.src) || 0;
+        if (their > 0 && my === 0) iNeed++;
+        if (my > 1 && their === 0) iOffer++;
+        if (my > 0 && their > 0)   bothHave++;
+      }
+      document.getElementById('compareStats').innerHTML =
+        `<span class="cstat cstat-need">필요 ${iNeed}</span>` +
+        `<span class="cstat cstat-offer">여분 ${iOffer}</span>` +
+        `<span class="cstat cstat-both">공통 ${bothHave}</span>`;
+    }
+
+    function buildTradeSummary() {
+      const need = [], offer = [];
+      const rarityOrder = { SE: 0, UR: 1, SR: 2, R: 3, N: 4 };
+      for (const c of CARDS) {
+        const my    = getCount(c.src);
+        const their = compareCards.get(c.src) || 0;
+        if (their > 0 && my === 0)
+          need.push({ card: c, theirCount: their });
+        if (my > 1 && their === 0)
+          offer.push({ card: c, extra: my - 1 });
+      }
+
+      // Sort by rarity (rarer first)
+      const byRarity = (a, b) => (rarityOrder[a.card.rarity] ?? 9) - (rarityOrder[b.card.rarity] ?? 9);
+      need.sort(byRarity);
+      offer.sort(byRarity);
+
+      // Render "they have, I need"
+      const needEl = document.getElementById('tradeNeed');
+      if (need.length === 0) {
+        needEl.innerHTML = '<p class="trade-empty">상대방이 가진 카드 중 필요한 것이 없습니다</p>';
+      } else {
+        needEl.innerHTML = need.map(({ card: c, theirCount }) =>
+          `<div class="trade-card trade-card-need" onclick="openModal(CARDS.find(x=>x.src==='${c.src}'))">
+            <img src="${c.src}" loading="lazy" />
+            <div class="trade-card-info">
+              <span class="trade-rarity">${c.rarity}</span>
+              <span class="trade-name">${c.name}</span>
+              ${theirCount > 1 ? `<span class="trade-extra">×${theirCount}</span>` : ''}
+            </div>
+          </div>`
+        ).join('');
+      }
+
+      // Render "my extras they need"
+      const offerEl = document.getElementById('tradeOffer');
+      if (offer.length === 0) {
+        offerEl.innerHTML = '<p class="trade-empty">교환 가능한 여분 카드가 없습니다</p>';
+      } else {
+        offerEl.innerHTML = offer.map(({ card: c, extra }) =>
+          `<div class="trade-card trade-card-offer" onclick="openModal(CARDS.find(x=>x.src==='${c.src}'))">
+            <img src="${c.src}" loading="lazy" />
+            <div class="trade-card-info">
+              <span class="trade-rarity">${c.rarity}</span>
+              <span class="trade-name">${c.name}</span>
+              <span class="trade-extra">여분 ×${extra}</span>
+            </div>
+          </div>`
+        ).join('');
+      }
+
+      // Trade match suggestions: pair my extras with their extras I need, by rarity
+      const matchSection = document.getElementById('tradeMatchSection');
+      const matchEl = document.getElementById('tradeMatches');
+      if (need.length > 0 && offer.length > 0) {
+        const matches = [];
+        const usedNeed = new Set(), usedOffer = new Set();
+        // Match same rarity first, then cross-rarity
+        for (const pass of ['same', 'cross']) {
+          for (let ni = 0; ni < need.length && matches.length < 10; ni++) {
+            if (usedNeed.has(ni)) continue;
+            for (let oi = 0; oi < offer.length && matches.length < 10; oi++) {
+              if (usedOffer.has(oi)) continue;
+              if (pass === 'same' && need[ni].card.rarity !== offer[oi].card.rarity) continue;
+              matches.push({ get: need[ni].card, give: offer[oi].card });
+              usedNeed.add(ni);
+              usedOffer.add(oi);
+              break;
+            }
+          }
+        }
+        if (matches.length > 0) {
+          matchSection.style.display = '';
+          matchEl.innerHTML = matches.map(({ get, give }) =>
+            `<div class="trade-match-row">
+              <div class="trade-match-card give" onclick="openModal(CARDS.find(x=>x.src==='${give.src}'))">
+                <img src="${give.src}" loading="lazy" />
+                <span class="trade-rarity">${give.rarity}</span>
+                <span class="trade-name">${give.name}</span>
+              </div>
+              <span class="trade-arrow">&harr;</span>
+              <div class="trade-match-card get" onclick="openModal(CARDS.find(x=>x.src==='${get.src}'))">
+                <img src="${get.src}" loading="lazy" />
+                <span class="trade-rarity">${get.rarity}</span>
+                <span class="trade-name">${get.name}</span>
+              </div>
+            </div>`
+          ).join('');
+        } else {
+          matchSection.style.display = 'none';
+        }
+      } else {
+        matchSection.style.display = 'none';
+      }
+    }
+
+    // ── On load: check for shared/compare link ──────────────
     window.addEventListener('load', () => {
       document.getElementById('codeInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') applyCode();
+        if (e.key === 'Enter') startCompare();
       });
       const hash = location.hash;
-      if (hash.startsWith('#c=')) enterSharedView(hash.slice(3));
+      if (hash.startsWith('#c=')) enterCompare(hash.slice(3));
     });
 
     // ── Print / PDF ─────────────────────────────────────────

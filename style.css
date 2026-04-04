@@ -70,19 +70,7 @@ body {
   background: #d32f2f;
 }
 
-/* ── Shared collection banner ────────────────────────────── */
-#sharedBanner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 10px 24px;
-  background: #1a1a2e;
-  color: #e0e0ff;
-  font-size: 14px;
-}
-
+/* ── Banner shared styles ────────────────────────────────── */
 .shared-label {
   font-weight: bold;
   letter-spacing: 0.02em;
@@ -478,5 +466,219 @@ button.active {
 
 #info-effect {
   line-height: 1.8;
+}
+
+/* ── Compare banner ─────────────────────────────────────── */
+#compareBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 24px;
+  background: #1a1a2e;
+  color: #e0e0ff;
+  font-size: 14px;
+}
+
+.compare-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.cstat {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.cstat-need  { background: #1565c0; color: #fff; }
+.cstat-offer { background: #e65100; color: #fff; }
+.cstat-both  { background: #2e7d32; color: #fff; }
+
+.compare-btn {
+  background: #1565c0 !important;
+  color: #fff !important;
+  border-color: #1565c0 !important;
+}
+.compare-btn:hover {
+  background: #1976d2 !important;
+}
+
+/* ── Compare card badges ────────────────────────────────── */
+.cmp-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.cmp-badge.cmp-need  { background: #1565c0; }
+.cmp-badge.cmp-offer { background: #e65100; }
+.cmp-badge.cmp-both  { background: #2e7d32; }
+
+.cmp-me   { opacity: 1; }
+.cmp-sep  { opacity: 0.5; margin: 0 2px; }
+.cmp-them { opacity: 0.8; }
+
+.cmp-tag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 0;
+  color: #fff;
+}
+.cmp-tag-need  { background: rgba(21,101,192,0.85); }
+.cmp-tag-offer { background: rgba(230,81,0,0.85); }
+
+/* In compare mode, "need" cards get a blue glow, "offer" get orange */
+.card-wrap:has(.cmp-need) {
+  box-shadow: 0 0 0 2px #1565c0;
+}
+.card-wrap:has(.cmp-offer) {
+  box-shadow: 0 0 0 2px #e65100;
+}
+
+/* ── Trade summary panel ────────────────────────────────── */
+#tradeSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 24px 24px;
+  background: #f9f9fb;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.trade-section { }
+
+.trade-title {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0 0 10px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-block;
+}
+.trade-need  { background: #e3f2fd; color: #1565c0; }
+.trade-offer { background: #fff3e0; color: #e65100; }
+.trade-match { background: #e8f5e9; color: #2e7d32; }
+
+.trade-cards {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.trade-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+  max-width: 220px;
+}
+.trade-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+.trade-card-need  { border-left: 3px solid #1565c0; }
+.trade-card-offer { border-left: 3px solid #e65100; }
+
+.trade-card img {
+  width: 36px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.trade-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.trade-rarity {
+  font-size: 10px;
+  font-weight: 900;
+  color: #888;
+}
+.trade-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trade-extra {
+  font-size: 10px;
+  color: #999;
+  font-weight: 700;
+}
+.trade-empty {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+  padding: 8px 0;
+}
+
+/* ── Trade match suggestions ────────────────────────────── */
+.trade-matches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trade-match-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid #c8e6c9;
+  border-radius: 10px;
+}
+
+.trade-match-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-width: 0;
+}
+.trade-match-card img {
+  width: 32px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.trade-match-card .trade-rarity {
+  flex-shrink: 0;
+}
+.trade-match-card .trade-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trade-match-card.give { opacity: 0.85; }
+
+.trade-arrow {
+  font-size: 20px;
+  color: #2e7d32;
+  font-weight: bold;
+  flex-shrink: 0;
 }
 
