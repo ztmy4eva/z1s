@@ -797,6 +797,14 @@ button.active {
 .cstat-offer { background: #e65100; color: #fff; }
 .cstat-both  { background: #2e7d32; color: #fff; }
 
+/* ── Account bar ─────────────────────────────────────────── */
+.acct-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .cloud-btn {
   background: #0f4c75;
   color: #e0f0ff;
@@ -806,12 +814,8 @@ button.active {
   background: #1a6fa0 !important;
   color: #fff !important;
 }
-.cloud-btn:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
 
-.cloud-id-bar {
+.acct-id-chip {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -821,19 +825,122 @@ button.active {
   border-radius: 6px;
   white-space: nowrap;
 }
-.cloud-id-label {
-  font-size: 11px;
-  font-weight: 700;
+.acct-id-label {
+  font-size: 10px;
+  font-weight: 800;
   color: #0f4c75;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-#cloudIdText {
+#acctIdText, #settingsId {
   font-family: monospace;
   font-size: 14px;
   font-weight: 700;
   color: #0f4c75;
   letter-spacing: 0.1em;
+}
+.acct-small-btn {
+  padding: 3px 8px !important;
+  font-size: 11px !important;
+}
+
+/* Sync status indicator */
+.sync-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 10px;
+}
+.sync-ok      { color: #2e7d32; background: #e8f5e9; }
+.sync-pending { color: #e65100; background: #fff3e0; }
+.sync-err     { color: #c62828; background: #ffebee; }
+
+/* ── Account panels (create / login / settings) ──────────── */
+.acct-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 200;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  min-width: 300px;
+}
+
+.acct-panel-inner h4 {
+  font-size: 15px;
+  margin: 0 0 6px;
+  color: #1a1a2e;
+}
+.acct-hint {
+  font-size: 12px;
+  color: #888;
+  margin: 0 0 12px;
+}
+
+.acct-panel-inner label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 10px;
+}
+.acct-panel-inner input {
+  font-size: 14px;
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: monospace;
+}
+.acct-panel-inner input:focus {
+  outline: none;
+  border-color: #0f4c75;
+}
+
+.acct-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.acct-error {
+  font-size: 12px;
+  color: #c62828;
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+.acct-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #555;
+}
+.acct-setting-row code {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f4c75;
+  letter-spacing: 0.1em;
+}
+
+/* ── Profile banner ─────────────────────────────────────── */
+#profileBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 24px;
+  background: #0f4c75;
+  color: #e0f0ff;
+  font-size: 14px;
 }
 
 .compare-btn {

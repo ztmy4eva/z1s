@@ -17,34 +17,100 @@
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
       <button class="summary-tab" onclick="showSummary(this)">요약</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
-      <!-- Progress + save code (collection mode only) -->
+      <!-- Progress + account bar (collection mode only) -->
       <div id="collTopBar" style="display:none">
         <div class="collection-progress" id="collectionProgress"></div>
-        <div class="save-code-bar">
-          <button class="code-btn cloud-btn" onclick="cloudSave()">☁ 저장</button>
-          <div id="cloudIdBar" style="display:none" class="cloud-id-bar">
-            <span class="cloud-id-label">내 ID</span>
-            <code id="cloudIdText"></code>
-            <button class="code-btn" onclick="copyCloudId()">복사</button>
-          </div>
-          <button class="code-btn" onclick="copyCode()">코드 복사</button>
-          <button class="code-btn" onclick="shareLink()">링크 복사</button>
+
+        <!-- Account: logged-out state -->
+        <div id="acctLoggedOut" class="acct-bar">
+          <button class="code-btn cloud-btn" onclick="showAcctPanel('create')">계정 만들기</button>
+          <button class="code-btn" onclick="showAcctPanel('login')">로그인</button>
           <span id="copyFeedback"></span>
-          <div class="import-wrap">
-            <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
-            <div id="compareInputArea" style="display:none">
-              <input id="codeInput" type="text" spellcheck="false" placeholder="코드 또는 8자리 클라우드 ID" />
-              <button class="code-btn apply-btn" onclick="startCompare()">비교</button>
-              <button class="code-btn" onclick="importCode()">가져오기</button>
-              <span id="importFeedback"></span>
+        </div>
+
+        <!-- Account: logged-in state -->
+        <div id="acctLoggedIn" class="acct-bar" style="display:none">
+          <div class="acct-id-chip">
+            <span class="acct-id-label">ID</span>
+            <code id="acctIdText"></code>
+            <button class="code-btn acct-small-btn" onclick="copyAcctId()">복사</button>
+          </div>
+          <div id="syncStatus" class="sync-status">동기화됨</div>
+          <button class="code-btn" onclick="shareLink()">링크 복사</button>
+          <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
+          <button class="code-btn print-btn" onclick="printCollection()">PDF 출력</button>
+          <button class="code-btn" onclick="showAcctPanel('settings')">⚙</button>
+          <span id="copyFeedback2"></span>
+        </div>
+
+        <!-- Account panels (create / login / settings) — overlay dropdown -->
+        <div id="acctPanel" class="acct-panel" style="display:none">
+          <!-- CREATE -->
+          <div id="panelCreate" class="acct-panel-inner" style="display:none">
+            <h4>계정 만들기</h4>
+            <p class="acct-hint">다른 기기에서 컬렉션을 불러오려면 PIN이 필요합니다</p>
+            <label>PIN (숫자 4자리) <input id="createPin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
+            <label>PIN 확인 <input id="createPinConfirm" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
+            <div class="acct-actions">
+              <button class="code-btn apply-btn" onclick="acctCreate()">만들기</button>
+              <button class="code-btn" onclick="hideAcctPanel()">취소</button>
+            </div>
+            <p id="createError" class="acct-error"></p>
+          </div>
+          <!-- LOGIN -->
+          <div id="panelLogin" class="acct-panel-inner" style="display:none">
+            <h4>로그인</h4>
+            <p class="acct-hint">다른 기기에서 만든 계정의 ID와 PIN을 입력하세요</p>
+            <label>ID (8자리) <input id="loginId" type="text" maxlength="8" spellcheck="false" placeholder="abc12345" /></label>
+            <label>PIN <input id="loginPin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
+            <div class="acct-actions">
+              <button class="code-btn apply-btn" onclick="acctLogin()">로그인</button>
+              <button class="code-btn" onclick="hideAcctPanel()">취소</button>
+            </div>
+            <p id="loginError" class="acct-error"></p>
+          </div>
+          <!-- SETTINGS -->
+          <div id="panelSettings" class="acct-panel-inner" style="display:none">
+            <h4>계정 설정</h4>
+            <div class="acct-setting-row">
+              <span>내 ID</span>
+              <code id="settingsId"></code>
+            </div>
+            <div class="acct-actions">
+              <button class="code-btn" onclick="copyCode()">코드 복사 (백업)</button>
+              <button class="code-btn clear-btn" onclick="clearAll()">전체 초기화</button>
+              <button class="code-btn" onclick="acctLogout()">로그아웃</button>
+              <button class="code-btn" onclick="hideAcctPanel()">닫기</button>
             </div>
           </div>
-          <button class="code-btn clear-btn" onclick="clearAll()">전체 초기화</button>
-          <button class="code-btn print-btn" onclick="printCollection()">PDF 출력</button>
+        </div>
+
+        <!-- Compare input (shared between states) -->
+        <div id="compareInputArea" class="acct-panel" style="display:none">
+          <div class="acct-panel-inner">
+            <h4>비교 / 교환</h4>
+            <p class="acct-hint">상대방의 ID 또는 컬렉션 코드를 입력하세요</p>
+            <input id="codeInput" type="text" spellcheck="false" placeholder="8자리 ID 또는 컬렉션 코드" />
+            <div class="acct-actions">
+              <button class="code-btn apply-btn" onclick="startCompare()">비교</button>
+              <button class="code-btn" onclick="importCode()">가져오기 (덮어쓰기)</button>
+              <button class="code-btn" onclick="hideCompareInput()">취소</button>
+            </div>
+            <span id="importFeedback" class="acct-error"></span>
+          </div>
         </div>
       </div>
     </div>
   </header>
+
+  <!-- Profile view banner (viewing someone else's collection) -->
+  <div id="profileBanner" style="display:none">
+    <span class="shared-label" id="profileLabel">컬렉션 보기</span>
+    <div class="shared-actions">
+      <button class="code-btn apply-btn" onclick="compareWithProfile()">내 컬렉션과 비교</button>
+      <button class="code-btn" onclick="exitProfile()">돌아가기</button>
+    </div>
+  </div>
 
   <!-- Compare mode banner -->
   <div id="compareBanner" style="display:none">
@@ -138,6 +204,7 @@
     let currentOwnership = 'all';
     let compareCards      = null;   // Map<src, count> of the other user
     let compareFilter     = 'all';  // 'all' | 'need' | 'offer' | 'both'
+    let isProfileView     = false;  // viewing someone else's collection (read-only)
 
     let ownedCards = (() => {
       const raw = JSON.parse(localStorage.getItem('zc_owned') || 'null');
@@ -150,6 +217,7 @@
       const obj = {};
       ownedCards.forEach((n, src) => { if (n > 0) obj[src] = n; });
       localStorage.setItem('zc_owned', JSON.stringify(obj));
+      if (typeof scheduleSync === 'function') scheduleSync();
     }
     function isOwned(src)  { return (ownedCards.get(src) || 0) > 0; }
     function getCount(src) { return ownedCards.get(src) || 0; }
@@ -220,6 +288,16 @@
             wrap.appendChild(tag);
           }
 
+          wrap.onclick = () => openModal(c);
+
+        } else if (isCollView && isProfileView) {
+          // Profile view: read-only with checkmark + count badge
+          if (owned) {
+            const mark = document.createElement('span');
+            mark.className = 'owned-mark';
+            mark.textContent = myCount > 1 ? '×' + myCount : '✓';
+            wrap.appendChild(mark);
+          }
           wrap.onclick = () => openModal(c);
 
         } else if (isCollView) {
@@ -327,6 +405,15 @@
       compareFilter = 'all';
       document.getElementById('compareBanner').style.display  = 'none';
       document.getElementById('tradeSummary').style.display   = 'none';
+      // Also clean up profile view if active
+      if (isProfileView && _savedOwnedForProfile) {
+        ownedCards = _savedOwnedForProfile;
+        _savedOwnedForProfile = null;
+      }
+      isProfileView = false;
+      profileCode = null;
+      profileId   = null;
+      document.getElementById('profileBanner').style.display = 'none';
     }
 
     function showOverview(btn) {
@@ -473,12 +560,13 @@
       return owned;
     }
 
-    // ── Save code buttons ───────────────────────────────────
+    // ── Feedback helper ───────────────────────────────────────
     function showFeedback(id, text, cls) {
       const el = document.getElementById(id);
+      if (!el) return;
       el.textContent = text;
       el.className = cls;
-      setTimeout(() => { el.textContent = ''; el.className = ''; }, 2000);
+      setTimeout(() => { el.textContent = ''; el.className = ''; }, 2500);
     }
 
     function copyCode() {
@@ -486,88 +574,202 @@
         .then(() => showFeedback('copyFeedback', '코드 복사됨! ✓', 'feedback-ok'));
     }
 
-    function shareLink() {
-      const base = location.href.split('#')[0];
-      const cloudId = localStorage.getItem(CLOUD_ID_KEY);
-      // Prefer cloud ID link (shorter); fall back to encoded code
-      const url = cloudId ? base + '#u=' + cloudId : base + '#c=' + encodeCollection();
-      navigator.clipboard.writeText(url)
-        .then(() => showFeedback('copyFeedback', '링크 복사됨! ✓', 'feedback-ok'));
+    // ── Account system ───────────────────────────────────────
+    const ACCT_ID_KEY  = 'zc_acct_id';
+    const ACCT_PIN_KEY = 'zc_acct_pin';
+    const CLOUD_ID_RE  = /^[a-z0-9]{8}$/;
+    let profileCode    = null;   // when viewing someone else's profile
+    let profileId      = null;
+
+    function isLoggedIn() {
+      return !!(localStorage.getItem(ACCT_ID_KEY) && localStorage.getItem(ACCT_PIN_KEY));
+    }
+    function getAcctId()  { return localStorage.getItem(ACCT_ID_KEY); }
+    function getAcctPin() { return localStorage.getItem(ACCT_PIN_KEY); }
+
+    function refreshAcctUI() {
+      const loggedIn = isLoggedIn();
+      document.getElementById('acctLoggedOut').style.display = loggedIn ? 'none' : 'flex';
+      document.getElementById('acctLoggedIn').style.display  = loggedIn ? 'flex' : 'none';
+      if (loggedIn) {
+        document.getElementById('acctIdText').textContent = getAcctId();
+        document.getElementById('settingsId').textContent = getAcctId();
+      }
     }
 
+    // ── Account panels ───────────────────────────────────────
+    function showAcctPanel(which) {
+      hideCompareInput();
+      const panel = document.getElementById('acctPanel');
+      document.querySelectorAll('.acct-panel-inner').forEach(el => el.style.display = 'none');
+      document.getElementById('panel' + which[0].toUpperCase() + which.slice(1)).style.display = 'block';
+      panel.style.display = 'block';
+    }
+    function hideAcctPanel() {
+      document.getElementById('acctPanel').style.display = 'none';
+    }
     function toggleCompareInput() {
+      hideAcctPanel();
       const area = document.getElementById('compareInputArea');
       const open = area.style.display === 'none';
-      area.style.display = open ? 'flex' : 'none';
+      area.style.display = open ? 'block' : 'none';
       if (open) document.getElementById('codeInput').focus();
+    }
+    function hideCompareInput() {
+      document.getElementById('compareInputArea').style.display = 'none';
+    }
+
+    // ── Create account ───────────────────────────────────────
+    async function acctCreate() {
+      const pin     = document.getElementById('createPin').value.trim();
+      const confirm = document.getElementById('createPinConfirm').value.trim();
+      const errEl   = document.getElementById('createError');
+      errEl.textContent = '';
+
+      if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'PIN은 숫자 4자리입니다'; return; }
+      if (pin !== confirm)       { errEl.textContent = 'PIN이 일치하지 않습니다'; return; }
+
+      try {
+        const code = encodeCollection();
+        const resp = await fetch('/api/collection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, pin }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) { errEl.textContent = data.error; return; }
+
+        localStorage.setItem(ACCT_ID_KEY, data.id);
+        localStorage.setItem(ACCT_PIN_KEY, pin);
+        hideAcctPanel();
+        refreshAcctUI();
+        setSyncStatus('saved');
+        showFeedback('copyFeedback2', '계정 생성됨! ID: ' + data.id, 'feedback-ok');
+      } catch (e) {
+        errEl.textContent = '서버 오류, 다시 시도해주세요';
+      }
+    }
+
+    // ── Login ────────────────────────────────────────────────
+    async function acctLogin() {
+      const id    = document.getElementById('loginId').value.trim().toLowerCase();
+      const pin   = document.getElementById('loginPin').value.trim();
+      const errEl = document.getElementById('loginError');
+      errEl.textContent = '';
+
+      if (!CLOUD_ID_RE.test(id)) { errEl.textContent = 'ID는 영소문자/숫자 8자리입니다'; return; }
+      if (!/^\d{4}$/.test(pin))  { errEl.textContent = 'PIN은 숫자 4자리입니다'; return; }
+
+      try {
+        const resp = await fetch('/api/collection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, pin, login: true }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) { errEl.textContent = data.error; return; }
+
+        // Load the cloud collection
+        ownedCards = decodeCollection(data.code);
+        saveOwned();
+        localStorage.setItem(ACCT_ID_KEY, id);
+        localStorage.setItem(ACCT_PIN_KEY, pin);
+        hideAcctPanel();
+        refreshAcctUI();
+        buildProgress();
+        renderCards();
+        setSyncStatus('saved');
+        showFeedback('copyFeedback2', '로그인 완료!', 'feedback-ok');
+      } catch (e) {
+        errEl.textContent = '서버 오류, 다시 시도해주세요';
+      }
+    }
+
+    function acctLogout() {
+      localStorage.removeItem(ACCT_ID_KEY);
+      localStorage.removeItem(ACCT_PIN_KEY);
+      hideAcctPanel();
+      refreshAcctUI();
+    }
+
+    function copyAcctId() {
+      navigator.clipboard.writeText(getAcctId())
+        .then(() => showFeedback('copyFeedback2', 'ID 복사됨! ✓', 'feedback-ok'));
+    }
+
+    function shareLink() {
+      const base = location.href.split('#')[0];
+      const id   = getAcctId();
+      const url  = id ? base + '#u=' + id : base + '#c=' + encodeCollection();
+      const fbId = isLoggedIn() ? 'copyFeedback2' : 'copyFeedback';
+      navigator.clipboard.writeText(url)
+        .then(() => showFeedback(fbId, '링크 복사됨! ✓', 'feedback-ok'));
+    }
+
+    // ── Auto-sync (debounced cloud save) ─────────────────────
+    let _syncTimer  = null;
+    let _syncing    = false;
+
+    function setSyncStatus(state) {
+      const el = document.getElementById('syncStatus');
+      if (!el) return;
+      if (state === 'saved')   { el.textContent = '동기화됨';   el.className = 'sync-status sync-ok'; }
+      if (state === 'pending') { el.textContent = '저장 중…';   el.className = 'sync-status sync-pending'; }
+      if (state === 'error')   { el.textContent = '동기화 실패'; el.className = 'sync-status sync-err'; }
+    }
+
+    function scheduleSync() {
+      if (!isLoggedIn()) return;
+      setSyncStatus('pending');
+      clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(doSync, 2000);
+    }
+
+    async function doSync() {
+      if (_syncing || !isLoggedIn()) return;
+      _syncing = true;
+      try {
+        const resp = await fetch('/api/collection', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: getAcctId(), pin: getAcctPin(), code: encodeCollection() }),
+        });
+        if (!resp.ok) throw new Error();
+        setSyncStatus('saved');
+      } catch {
+        setSyncStatus('error');
+      } finally {
+        _syncing = false;
+      }
     }
 
     function clearAll() {
-      if (!confirm('모든 보유 카드를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
+      if (!window.confirm('모든 보유 카드를 초기화하시겠습니까?')) return;
       ownedCards = new Map();
       saveOwned();
       buildProgress();
       renderCards();
+      scheduleSync();
     }
 
     function importCode() {
       const input = document.getElementById('codeInput');
       if (!input.value.trim()) return;
-      if (!confirm('현재 컬렉션을 이 코드로 덮어쓰시겠습니까?')) return;
+      if (!window.confirm('현재 컬렉션을 덮어쓰시겠습니까?')) return;
       try {
         ownedCards = decodeCollection(input.value);
         saveOwned();
         input.value = '';
-        document.getElementById('compareInputArea').style.display = 'none';
+        hideCompareInput();
         buildProgress();
         renderCards();
-        showFeedback('copyFeedback', '가져오기 완료! ✓', 'feedback-ok');
+        scheduleSync();
       } catch (e) {
         showFeedback('importFeedback', '잘못된 코드', 'feedback-err');
       }
     }
 
-    // ── Cloud storage ────────────────────────────────────────
-    const CLOUD_ID_KEY = 'zc_cloud_id';
-    const CLOUD_ID_RE  = /^[a-z0-9]{8}$/;
-
-    function showCloudId(id) {
-      localStorage.setItem(CLOUD_ID_KEY, id);
-      document.getElementById('cloudIdText').textContent = id;
-      document.getElementById('cloudIdBar').style.display = 'flex';
-    }
-
-    function copyCloudId() {
-      const id = document.getElementById('cloudIdText').textContent;
-      navigator.clipboard.writeText(id)
-        .then(() => showFeedback('copyFeedback', 'ID 복사됨! ✓', 'feedback-ok'));
-    }
-
-    async function cloudSave() {
-      const btn = document.querySelector('.cloud-btn');
-      btn.disabled = true;
-      btn.textContent = '저장 중...';
-      try {
-        const code = encodeCollection();
-        const existingId = localStorage.getItem(CLOUD_ID_KEY);
-        const url = '/api/collection' + (existingId ? `?id=${existingId}` : '');
-        const resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
-        });
-        if (!resp.ok) throw new Error('서버 오류');
-        const { id } = await resp.json();
-        showCloudId(id);
-        showFeedback('copyFeedback', '클라우드 저장 완료! ✓', 'feedback-ok');
-      } catch (e) {
-        showFeedback('copyFeedback', '저장 실패: ' + e.message, 'feedback-err');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '☁ 저장';
-      }
-    }
-
+    // ── Profile view (viewing someone else's collection) ─────
     async function fetchCloudCode(id) {
       const resp = await fetch(`/api/collection?id=${id}`);
       if (!resp.ok) throw new Error('ID를 찾을 수 없습니다');
@@ -575,57 +777,82 @@
       return code;
     }
 
-    // ── Compare mode ────────────────────────────────────────
+    let _savedOwnedForProfile = null;
+
+    async function enterProfileView(id) {
+      try {
+        profileCode = await fetchCloudCode(id);
+        profileId   = id;
+        isProfileView = true;
+        // Save user's own cards, swap in the profile's collection for rendering
+        _savedOwnedForProfile = new Map(ownedCards);
+        ownedCards = decodeCollection(profileCode);
+        document.getElementById('profileLabel').textContent = `${id} 의 컬렉션`;
+        document.getElementById('profileBanner').style.display = 'flex';
+        showCollection(document.querySelector('.collection-tab'));
+      } catch {
+        history.replaceState(null, '', location.pathname);
+      }
+    }
+
+    function compareWithProfile() {
+      if (!profileCode || !_savedOwnedForProfile) return;
+      // Restore own collection, then compare against profile
+      ownedCards = _savedOwnedForProfile;
+      _savedOwnedForProfile = null;
+      isProfileView = false;
+      document.getElementById('profileBanner').style.display = 'none';
+      try {
+        compareCards = decodeCollection(profileCode);
+        compareFilter = 'all';
+        document.getElementById('compareBanner').style.display = 'flex';
+        document.getElementById('tradeSummary').style.display = 'flex';
+        updateCompareStats();
+        buildTradeSummary();
+      } catch {}
+      renderCards();
+      profileCode = null;
+      profileId   = null;
+    }
+
+    function exitProfile() {
+      // Restore own collection
+      if (_savedOwnedForProfile) {
+        ownedCards = _savedOwnedForProfile;
+        _savedOwnedForProfile = null;
+      }
+      isProfileView = false;
+      profileCode = null;
+      profileId   = null;
+      document.getElementById('profileBanner').style.display = 'none';
+      history.replaceState(null, '', location.pathname);
+      renderCards();
+    }
+
+    // ── Compare mode ─────────────────────────────────────────
     async function startCompare() {
       const input = document.getElementById('codeInput');
       const val   = input.value.trim();
       if (!val) return;
 
       let code = val;
-
-      // Cloud ID: exactly 8 lowercase alphanumeric chars
       if (CLOUD_ID_RE.test(val)) {
-        const btn = document.querySelector('.compare-btn');
-        btn.disabled = true;
-        try {
-          code = await fetchCloudCode(val);
-        } catch (e) {
-          showFeedback('importFeedback', e.message, 'feedback-err');
-          btn.disabled = false;
-          return;
-        } finally {
-          btn.disabled = false;
-        }
+        try { code = await fetchCloudCode(val); }
+        catch (e) { showFeedback('importFeedback', e.message, 'feedback-err'); return; }
       }
 
       try {
         compareCards = decodeCollection(code);
         compareFilter = 'all';
         input.value = '';
-        document.getElementById('compareInputArea').style.display = 'none';
+        hideCompareInput();
         document.getElementById('compareBanner').style.display = 'flex';
         document.getElementById('tradeSummary').style.display = 'flex';
         updateCompareStats();
         buildTradeSummary();
         renderCards();
-      } catch (e) {
+      } catch {
         showFeedback('importFeedback', '잘못된 코드', 'feedback-err');
-      }
-    }
-
-    async function enterCompare(value, isCloudId = false) {
-      try {
-        const code = isCloudId ? await fetchCloudCode(value) : value;
-        compareCards = decodeCollection(code);
-        compareFilter = 'all';
-        showCollection(document.querySelector('.collection-tab'));
-        document.getElementById('compareBanner').style.display = 'flex';
-        document.getElementById('tradeSummary').style.display = 'flex';
-        updateCompareStats();
-        buildTradeSummary();
-        renderCards();
-      } catch (e) {
-        history.replaceState(null, '', location.pathname);
       }
     }
 
@@ -680,12 +907,10 @@
           offer.push({ card: c, extra: my - 1 });
       }
 
-      // Sort by rarity (rarer first)
       const byRarity = (a, b) => (rarityOrder[a.card.rarity] ?? 9) - (rarityOrder[b.card.rarity] ?? 9);
       need.sort(byRarity);
       offer.sort(byRarity);
 
-      // Render "they have, I need"
       const needEl = document.getElementById('tradeNeed');
       if (need.length === 0) {
         needEl.innerHTML = '<p class="trade-empty">상대방이 가진 카드 중 필요한 것이 없습니다</p>';
@@ -702,7 +927,6 @@
         ).join('');
       }
 
-      // Render "my extras they need"
       const offerEl = document.getElementById('tradeOffer');
       if (offer.length === 0) {
         offerEl.innerHTML = '<p class="trade-empty">교환 가능한 여분 카드가 없습니다</p>';
@@ -719,13 +943,11 @@
         ).join('');
       }
 
-      // Trade match suggestions: pair my extras with their extras I need, by rarity
       const matchSection = document.getElementById('tradeMatchSection');
       const matchEl = document.getElementById('tradeMatches');
       if (need.length > 0 && offer.length > 0) {
         const matches = [];
         const usedNeed = new Set(), usedOffer = new Set();
-        // Match same rarity first, then cross-rarity
         for (const pass of ['same', 'cross']) {
           for (let ni = 0; ni < need.length && matches.length < 10; ni++) {
             if (usedNeed.has(ni)) continue;
@@ -764,18 +986,28 @@
       }
     }
 
-    // ── On load: check for shared/compare link ──────────────
+    // ── On load ──────────────────────────────────────────────
     window.addEventListener('load', () => {
       document.getElementById('codeInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') startCompare();
       });
-      // Restore cloud ID display
-      const savedId = localStorage.getItem(CLOUD_ID_KEY);
-      if (savedId) showCloudId(savedId);
-      // Handle shared/compare link
+      refreshAcctUI();
       const hash = location.hash;
-      if (hash.startsWith('#c=')) enterCompare(hash.slice(3));
-      if (hash.startsWith('#u=')) enterCompare(hash.slice(3), true);
+      if (hash.startsWith('#u=')) {
+        enterProfileView(hash.slice(3));
+      } else if (hash.startsWith('#c=')) {
+        // Legacy code links — show as compare
+        try {
+          compareCards = decodeCollection(hash.slice(3));
+          compareFilter = 'all';
+          showCollection(document.querySelector('.collection-tab'));
+          document.getElementById('compareBanner').style.display = 'flex';
+          document.getElementById('tradeSummary').style.display = 'flex';
+          updateCompareStats();
+          buildTradeSummary();
+          renderCards();
+        } catch { history.replaceState(null, '', location.pathname); }
+      }
     });
 
     // ── Print / PDF ─────────────────────────────────────────
