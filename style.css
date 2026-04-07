@@ -797,6 +797,45 @@ button.active {
 .cstat-offer { background: #e65100; color: #fff; }
 .cstat-both  { background: #2e7d32; color: #fff; }
 
+.cloud-btn {
+  background: #0f4c75;
+  color: #e0f0ff;
+  border-color: #0f4c75;
+}
+.cloud-btn:hover {
+  background: #1a6fa0 !important;
+  color: #fff !important;
+}
+.cloud-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.cloud-id-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #e8f4fd;
+  border: 1px solid #90caf9;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.cloud-id-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f4c75;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+#cloudIdText {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f4c75;
+  letter-spacing: 0.1em;
+}
+
 .compare-btn {
   background: #1565c0 !important;
   color: #fff !important;

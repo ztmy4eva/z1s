@@ -21,13 +21,19 @@
       <div id="collTopBar" style="display:none">
         <div class="collection-progress" id="collectionProgress"></div>
         <div class="save-code-bar">
+          <button class="code-btn cloud-btn" onclick="cloudSave()">☁ 저장</button>
+          <div id="cloudIdBar" style="display:none" class="cloud-id-bar">
+            <span class="cloud-id-label">내 ID</span>
+            <code id="cloudIdText"></code>
+            <button class="code-btn" onclick="copyCloudId()">복사</button>
+          </div>
           <button class="code-btn" onclick="copyCode()">코드 복사</button>
           <button class="code-btn" onclick="shareLink()">링크 복사</button>
           <span id="copyFeedback"></span>
           <div class="import-wrap">
             <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
             <div id="compareInputArea" style="display:none">
-              <input id="codeInput" type="text" spellcheck="false" placeholder="상대방 코드 붙여넣기" />
+              <input id="codeInput" type="text" spellcheck="false" placeholder="코드 또는 8자리 클라우드 ID" />
               <button class="code-btn apply-btn" onclick="startCompare()">비교</button>
               <button class="code-btn" onclick="importCode()">가져오기</button>
               <span id="importFeedback"></span>
@@ -481,7 +487,10 @@
     }
 
     function shareLink() {
-      const url = location.href.split('#')[0] + '#c=' + encodeCollection();
+      const base = location.href.split('#')[0];
+      const cloudId = localStorage.getItem(CLOUD_ID_KEY);
+      // Prefer cloud ID link (shorter); fall back to encoded code
+      const url = cloudId ? base + '#u=' + cloudId : base + '#c=' + encodeCollection();
       navigator.clipboard.writeText(url)
         .then(() => showFeedback('copyFeedback', '링크 복사됨! ✓', 'feedback-ok'));
     }
@@ -518,11 +527,79 @@
       }
     }
 
-    // ── Compare mode ────────────────────────────────────────
-    function startCompare() {
-      const input = document.getElementById('codeInput');
+    // ── Cloud storage ────────────────────────────────────────
+    const CLOUD_ID_KEY = 'zc_cloud_id';
+    const CLOUD_ID_RE  = /^[a-z0-9]{8}$/;
+
+    function showCloudId(id) {
+      localStorage.setItem(CLOUD_ID_KEY, id);
+      document.getElementById('cloudIdText').textContent = id;
+      document.getElementById('cloudIdBar').style.display = 'flex';
+    }
+
+    function copyCloudId() {
+      const id = document.getElementById('cloudIdText').textContent;
+      navigator.clipboard.writeText(id)
+        .then(() => showFeedback('copyFeedback', 'ID 복사됨! ✓', 'feedback-ok'));
+    }
+
+    async function cloudSave() {
+      const btn = document.querySelector('.cloud-btn');
+      btn.disabled = true;
+      btn.textContent = '저장 중...';
       try {
-        compareCards = decodeCollection(input.value);
+        const code = encodeCollection();
+        const existingId = localStorage.getItem(CLOUD_ID_KEY);
+        const url = '/api/collection' + (existingId ? `?id=${existingId}` : '');
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        if (!resp.ok) throw new Error('서버 오류');
+        const { id } = await resp.json();
+        showCloudId(id);
+        showFeedback('copyFeedback', '클라우드 저장 완료! ✓', 'feedback-ok');
+      } catch (e) {
+        showFeedback('copyFeedback', '저장 실패: ' + e.message, 'feedback-err');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '☁ 저장';
+      }
+    }
+
+    async function fetchCloudCode(id) {
+      const resp = await fetch(`/api/collection?id=${id}`);
+      if (!resp.ok) throw new Error('ID를 찾을 수 없습니다');
+      const { code } = await resp.json();
+      return code;
+    }
+
+    // ── Compare mode ────────────────────────────────────────
+    async function startCompare() {
+      const input = document.getElementById('codeInput');
+      const val   = input.value.trim();
+      if (!val) return;
+
+      let code = val;
+
+      // Cloud ID: exactly 8 lowercase alphanumeric chars
+      if (CLOUD_ID_RE.test(val)) {
+        const btn = document.querySelector('.compare-btn');
+        btn.disabled = true;
+        try {
+          code = await fetchCloudCode(val);
+        } catch (e) {
+          showFeedback('importFeedback', e.message, 'feedback-err');
+          btn.disabled = false;
+          return;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      try {
+        compareCards = decodeCollection(code);
         compareFilter = 'all';
         input.value = '';
         document.getElementById('compareInputArea').style.display = 'none';
@@ -536,8 +613,9 @@
       }
     }
 
-    function enterCompare(code) {
+    async function enterCompare(value, isCloudId = false) {
       try {
+        const code = isCloudId ? await fetchCloudCode(value) : value;
         compareCards = decodeCollection(code);
         compareFilter = 'all';
         showCollection(document.querySelector('.collection-tab'));
@@ -691,8 +769,13 @@
       document.getElementById('codeInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') startCompare();
       });
+      // Restore cloud ID display
+      const savedId = localStorage.getItem(CLOUD_ID_KEY);
+      if (savedId) showCloudId(savedId);
+      // Handle shared/compare link
       const hash = location.hash;
       if (hash.startsWith('#c=')) enterCompare(hash.slice(3));
+      if (hash.startsWith('#u=')) enterCompare(hash.slice(3), true);
     });
 
     // ── Print / PDF ─────────────────────────────────────────

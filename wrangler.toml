@@ -1,0 +1,16 @@
+name = "z1s"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "."
+
+# ── KV namespace for cloud collection storage ──────────────────
+# Steps to set up:
+#   1. Cloudflare Dashboard → Workers & Pages → KV
+#   2. Create namespace named "COLLECTIONS"
+#   3. Copy the namespace ID and preview ID into the fields below
+#   4. In Cloudflare Pages → Settings → Functions → KV namespace bindings
+#      add binding: Variable name = COLLECTIONS, KV namespace = COLLECTIONS
+#
+[[kv_namespaces]]
+binding     = "COLLECTIONS"
+id          = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id  = "REPLACE_WITH_KV_NAMESPACE_PREVIEW_ID"
