@@ -81,7 +81,7 @@ const CARDS = [
     "power": "",
     "powercost": "♦︎♦︎",
     "sendtopower": "♦︎ × 0",
-    "effect": "어비스의 카드 중에서 \n        자유롭게 하나를 골라, \n        이번 턴에 사용한다"
+    "effect": "어비스에 있는 인챈트 카드 중에서 \n        자유롭게 하나를 골라, 이 카드의 효과로 사용한다"
   },
   {
     "src": "cards/zutomayocard_1st_7.png",
@@ -1201,7 +1201,7 @@ const CARDS = [
     "power": "",
     "powercost": "0",
     "sendtopower": "♦︎ × 0",
-    "effect": "패의 1장을 어비스의\n        제일 위의 카드 1장과 바꾼다"
+    "effect": "패의 1장과 어비스에 있는\n        맘에 드는 카드 1장을 바꾼다"
   },
   {
     "src": "cards/zutomayocard_1st_87.png",
@@ -1439,7 +1439,7 @@ const CARDS = [
     "power": "",
     "powercost": "0",
     "sendtopower": "♦︎ × 1",
-    "effect": "상대 어비스의 카드를 \n        한 장 골라 덱으로 되돌린다"
+    "effect": "상대 어비스의 카드를 \n        한 장 골라 덱의 맨 아래로 되돌린다"
   },
   {
     "src": "cards/zutomayocard_1st_104.png",
@@ -1565,7 +1565,7 @@ const CARDS = [
     "power": "",
     "powercost": "♦︎♦︎",
     "sendtopower": "♦︎ × 0",
-    "effect": "이 카드와 동시에 내는\n        자신의 캐릭터 카드의\n        파워 코스트에 -2를 적용시킨다"
+    "effect": "이번 턴에, 동시에 낸 자신의\n        캐릭터 카드의 파워 코스트를\n        ♦︎2 감소시킨다"
   },
   {
     "src": "cards2/zutomayocard_2nd_7.png",
@@ -1593,7 +1593,7 @@ const CARDS = [
     "power": "",
     "powercost": "♦︎♦︎♦︎",
     "sendtopower": "♦︎ × 1",
-    "effect": "자신의 캐릭터 카드의 속성이 전기라면,\n        상대 파워 차저의 카드 중 \n        센드 투 파워의 합계 2까지\n        카드를 선택해, 상대의 덱 아래에 둔다"
+    "effect": "자신의 캐릭터 카드의 속성이 전기라면,\n        상대 파워 차저의 카드 중 \n        센드 투 파워 ♦︎2의 카드를 한장 선택해,\n        상대의 덱 아래에 둔다"
   },
   {
     "src": "cards2/zutomayocard_2nd_9.png",
@@ -3077,7 +3077,7 @@ const CARDS = [
     "power": "",
     "powercost": "♦︎♦︎♦︎♦︎",
     "sendtopower": "♦︎ × 0",
-    "effect": "어비스에 4가지 속성의\n        카드가 모두 있다면,\n        공격력 +100"
+    "effect": "어비스에\n        어둠, 화염, 전기, 바람 속성의\n        카드가 있다면, 공격력 +100"
   },
   {
     "src": "cards3/zutomayocard_3rd_9.png",
@@ -3273,7 +3273,7 @@ const CARDS = [
     "power": "밤 : 60   ｜   낮 : 60",
     "powercost": "♦︎♦︎♦︎",
     "sendtopower": "♦︎ × 0",
-    "effect": "어비스에 4가지 속성의\n        카드가 모두 있다면,\n        공격력 +40"
+    "effect": "어비스에\n        어둠, 화염, 전기, 바람 속성의\n        카드가 있다면, 공격력 +40"
   },
   {
     "src": "cards3/zutomayocard_3rd_23.png",
