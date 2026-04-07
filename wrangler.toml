@@ -2,16 +2,6 @@ name = "z1s"
 pages_build_output_dir = "."
 compatibility_date = "2024-09-23"
 
-# KV namespace for cloud collection storage.
-# Configure this binding in the Cloudflare Pages dashboard:
+# KV namespace binding is configured in the Cloudflare Pages dashboard:
 #   Pages project → Settings → Functions → KV namespace bindings
-#   Variable name: COLLECTIONS  →  your KV namespace
-#
-# For local dev with wrangler:
-#   1. npx wrangler kv namespace create COLLECTIONS
-#   2. paste the returned id/preview_id below
-#
-[[kv_namespaces]]
-binding    = "COLLECTIONS"
-id         = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_KV_NAMESPACE_PREVIEW_ID"
+#   Variable name: COLLECTIONS  →  select your KV namespace
