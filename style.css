@@ -39,6 +39,7 @@ body {
   border-left: 1px solid #ddd;
   padding-left: 16px;
   margin-left: 4px;
+  position: relative;
 }
 
 .collection-tab {
