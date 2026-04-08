@@ -23,30 +23,56 @@ body {
 
 .top-left button,
 .top-right button {
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 6px;
   cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
+  color: #333;
+}
+
+.top-left button:hover {
+  background: #f0f0f5;
+}
+
+.top-left button.active {
+  background: #1a1a2e !important;
+  color: #fff !important;
+  border-color: #1a1a2e !important;
 }
 
 
-/* Collection top bar (progress + code, inline with left nav) */
-#collTopBar {
+/* ── Collection sub-bar (below nav, shown in collection mode) */
+.coll-sub-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 20px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #e4e7ec;
   flex-wrap: wrap;
-  border-left: 1px solid #ddd;
-  padding-left: 16px;
-  margin-left: 4px;
+  position: relative;
+}
+
+.coll-acct-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
   position: relative;
 }
 
 .collection-tab {
-  margin-left: 12px;
-  background: #1a1a2e;
-  color: #e0e0ff;
-  border: none !important;
+  background: #1a1a2e !important;
+  color: #e0e0ff !important;
+  border-color: #1a1a2e !important;
+}
+.summary-tab {
+  background: #263238 !important;
+  color: #cfd8dc !important;
+  border-color: #263238 !important;
 }
 
 .collection-tab.active,
@@ -57,9 +83,9 @@ body {
 
 .buy-btn {
   display: inline-block;
-  padding: 12px 20px;
-  font-size: 16px;
-  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 6px;
   background: #b71c1c;
   color: #fff;
   text-decoration: none;
@@ -170,12 +196,12 @@ button.active {
 
 /* Unowned: greyed out in browse AND collection */
 .card-wrap.unowned img {
-  filter: grayscale(100%) opacity(0.35);
+  filter: grayscale(100%) opacity(0.5);
 }
 
 /* In browse mode, hovering unowned shows it clearly */
 .card-grid .card-wrap.unowned:hover img {
-  filter: grayscale(60%) opacity(0.6);
+  filter: grayscale(40%) opacity(0.75);
 }
 
 /* ── Owned checkmark badge (shared/read-only view) ───────── */
@@ -379,8 +405,7 @@ button.active {
   padding: 6px 10px;
   border: 1px solid #bbb;
   border-radius: 6px;
-  width: 320px;
-  max-width: 100%;
+  width: min(320px, 100%);
 }
 
 #codeInput:focus {
@@ -479,11 +504,11 @@ button.active {
   line-height: 1.8;
 }
 
-/* ── Summary tab button ─────────────────────────────────── */
-.summary-tab {
-  background: #263238;
-  color: #cfd8dc;
-  border: none !important;
+/* ── Summary / Collection tab hover/active ──────────────── */
+.collection-tab.active,
+.collection-tab:hover {
+  background: #3a3a6e !important;
+  color: #fff !important;
 }
 .summary-tab.active,
 .summary-tab:hover {
@@ -820,11 +845,23 @@ button.active {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   background: #e8f4fd;
   border: 1px solid #90caf9;
   border-radius: 6px;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.acct-id-chip:hover {
+  background: #d0eafb;
+}
+.acct-id-chip:hover::after {
+  content: ' 복사';
+  font-size: 10px;
+  color: #1565c0;
+  opacity: 0.7;
 }
 .acct-id-label {
   font-size: 10px;
@@ -840,9 +877,31 @@ button.active {
   color: #0f4c75;
   letter-spacing: 0.1em;
 }
-.acct-small-btn {
-  padding: 3px 8px !important;
-  font-size: 11px !important;
+.acct-copy-feedback {
+  font-size: 12px;
+}
+
+/* ── Icon-only action buttons ────────────────────────────── */
+.acct-icon-group {
+  display: flex;
+  gap: 4px;
+}
+.acct-icon-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, border-color 0.12s;
+}
+.acct-icon-btn:hover {
+  background: #f0f4f8;
+  border-color: #aab4c0;
 }
 
 /* Sync status indicator */
@@ -856,10 +915,23 @@ button.active {
 .sync-pending { color: #e65100; background: #fff3e0; }
 .sync-err     { color: #c62828; background: #ffebee; }
 
+.sync-retry-btn {
+  background: none;
+  border: 1px solid #c62828;
+  color: #c62828;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 1px 6px;
+  cursor: pointer;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.sync-retry-btn:hover { background: #ffcdd2; }
+
 /* ── Account panels (create / login / settings) ──────────── */
 .acct-panel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   right: 0;
   z-index: 200;
   background: #fff;
@@ -1128,5 +1200,228 @@ button.active {
   color: #2e7d32;
   font-weight: bold;
   flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE / RESPONSIVE
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Tablet (≤768px) ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .top-left button,
+  .top-right button,
+  .buy-btn {
+    padding: 9px 13px;
+    font-size: 14px;
+  }
+
+  .container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px dashed #aaa;
+    padding: 10px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    box-sizing: border-box;
+  }
+
+  .sidebar button {
+    display: inline-block;
+    width: auto;
+    margin-bottom: 0;
+    padding: 7px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .sidebar.disabled {
+    pointer-events: none;
+    opacity: 0.45;
+  }
+
+  .card-grid {
+    padding: 12px;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+
+  .card-wrap {
+    width: 100%;
+  }
+  .card-wrap img {
+    width: 100%;
+  }
+
+  .modal {
+    align-items: flex-start;
+    padding-top: 20px;
+  }
+
+  .modal-content {
+    flex-direction: column;
+    align-items: center;
+    max-height: 90vh;
+    overflow-y: auto;
+    max-width: 95vw;
+  }
+
+  .modal-content img {
+    width: min(280px, 100%);
+    height: auto;
+    flex-shrink: 1;
+  }
+
+  .modal-info {
+    max-height: none;
+    width: 100%;
+  }
+
+  .card-table {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .coll-sub-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .collection-progress {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .prog-item {
+    min-width: 58px;
+  }
+
+  .acct-panel {
+    min-width: 0;
+    width: calc(100vw - 40px);
+    right: 0;
+    left: auto;
+  }
+}
+
+/* ── Phone (≤480px) ──────────────────────────────────────── */
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .top-left button,
+  .top-right button,
+  .buy-btn {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .coll-sub-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .coll-acct-area {
+    width: 100%;
+  }
+
+  .card-grid {
+    padding: 8px;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  }
+
+  .count-badge {
+    height: 20px;
+  }
+
+  .cnt-btn {
+    padding: 0 4px;
+    font-size: 15px;
+    min-height: 32px;
+    min-width: 28px;
+  }
+
+  .modal-content {
+    padding: 14px;
+  }
+
+  .modal-content img {
+    width: min(220px, 80vw);
+  }
+
+  .card-table th {
+    width: 60px;
+    font-size: 12px;
+    padding: 5px 7px;
+  }
+
+  .card-table td {
+    font-size: 12px;
+    padding: 5px 7px;
+  }
+
+  .acct-panel {
+    width: calc(100vw - 24px);
+    padding: 14px 14px;
+  }
+
+  .acct-id-chip {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .sv-wrap {
+    padding: 16px 12px 40px;
+  }
+
+  .sv-hero-num {
+    font-size: 38px;
+  }
+
+  .sv-hero-den {
+    font-size: 20px;
+  }
+
+  .sv-season-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cmp-banner,
+  #profileBanner {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .shared-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .compare-panel {
+    padding: 10px 12px;
+  }
+
+  .trade-match-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .collection-season-tabs {
+    flex-wrap: wrap;
+  }
+
+  .collection-season-tabs button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
 }
 

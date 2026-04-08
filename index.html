@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZUTOMAYO CARD 한글 번역 </title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -17,92 +18,99 @@
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
       <button class="summary-tab" onclick="showSummary(this)">요약</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
-      <!-- Progress + account bar (collection mode only) -->
-      <div id="collTopBar" style="display:none">
-        <div class="collection-progress" id="collectionProgress"></div>
+    </div>
+  </header>
 
-        <!-- Account: logged-out state -->
-        <div id="acctLoggedOut" class="acct-bar">
-          <button class="code-btn cloud-btn" onclick="showAcctPanel('create')">계정 만들기</button>
-          <button class="code-btn" onclick="showAcctPanel('login')">로그인</button>
-          <span id="copyFeedback"></span>
+  <!-- Collection sub-bar (progress + account, shown only in collection mode) -->
+  <div id="collTopBar" class="coll-sub-bar" style="display:none">
+    <!-- Left: progress -->
+    <div class="collection-progress" id="collectionProgress"></div>
+
+    <!-- Right: account area -->
+    <div class="coll-acct-area">
+
+      <!-- Logged-out -->
+      <div id="acctLoggedOut" class="acct-bar">
+        <button class="code-btn cloud-btn" onclick="showAcctPanel('create')">계정 만들기</button>
+        <button class="code-btn" onclick="showAcctPanel('login')">로그인</button>
+        <span id="copyFeedback"></span>
+      </div>
+
+      <!-- Logged-in -->
+      <div id="acctLoggedIn" class="acct-bar" style="display:none">
+        <div class="acct-id-chip" onclick="copyAcctId()" title="클릭하여 ID 복사">
+          <span class="acct-id-label">ID</span>
+          <code id="acctIdText"></code>
         </div>
-
-        <!-- Account: logged-in state -->
-        <div id="acctLoggedIn" class="acct-bar" style="display:none">
-          <div class="acct-id-chip">
-            <span class="acct-id-label">ID</span>
-            <code id="acctIdText"></code>
-            <button class="code-btn acct-small-btn" onclick="copyAcctId()">복사</button>
-          </div>
-          <div id="syncStatus" class="sync-status">동기화됨</div>
-          <button class="code-btn" onclick="shareLink()">링크 복사</button>
-          <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
-          <button class="code-btn print-btn" onclick="printCollection()">PDF 출력</button>
-          <button class="code-btn" onclick="showAcctPanel('settings')">⚙</button>
-          <span id="copyFeedback2"></span>
+        <div id="syncStatus" class="sync-status sync-ok">동기화됨</div>
+        <span id="copyFeedback2" class="acct-copy-feedback"></span>
+        <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
+        <div class="acct-icon-group">
+          <button class="acct-icon-btn" onclick="shareLink()" title="링크 복사">🔗</button>
+          <button class="acct-icon-btn" onclick="printCollection()" title="PDF 출력">🖨</button>
+          <button class="acct-icon-btn" onclick="showAcctPanel('settings')" title="설정">⚙</button>
         </div>
+      </div>
 
-        <!-- Account panels (create / login / settings) — overlay dropdown -->
-        <div id="acctPanel" class="acct-panel" style="display:none">
-          <!-- CREATE -->
-          <div id="panelCreate" class="acct-panel-inner" style="display:none">
-            <h4>계정 만들기</h4>
-            <p class="acct-hint">영문·숫자 3~16자 ID와 숫자 4자리 PIN으로 계정을 만듭니다</p>
-            <label>ID (영문·숫자, 3~16자) <input id="createId" type="text" maxlength="16" placeholder="myid123" autocomplete="off" /></label>
-            <label>PIN (숫자 4자리) <input id="createPin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
-            <label>PIN 확인 <input id="createPinConfirm" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
-            <div class="acct-actions">
-              <button class="code-btn apply-btn" onclick="acctCreate()">만들기</button>
-              <button class="code-btn" onclick="hideAcctPanel()">취소</button>
-            </div>
-            <p id="createError" class="acct-error"></p>
+      <!-- Dropdown panels (create / login / settings) -->
+      <div id="acctPanel" class="acct-panel" style="display:none">
+        <!-- CREATE -->
+        <div id="panelCreate" class="acct-panel-inner" style="display:none">
+          <h4>계정 만들기</h4>
+          <p class="acct-hint">영문·숫자 3~16자 ID와 숫자 4자리 PIN으로 계정을 만듭니다</p>
+          <label>ID (영문·숫자, 3~16자) <input id="createId" type="text" maxlength="16" placeholder="myid123" autocomplete="off" /></label>
+          <label>PIN (숫자 4자리) <input id="createPin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
+          <label>PIN 확인 <input id="createPinConfirm" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
+          <div class="acct-actions">
+            <button class="code-btn apply-btn" onclick="acctCreate()">만들기</button>
+            <button class="code-btn" onclick="hideAcctPanel()">취소</button>
           </div>
-          <!-- LOGIN -->
-          <div id="panelLogin" class="acct-panel-inner" style="display:none">
-            <h4>로그인</h4>
-            <p class="acct-hint">다른 기기에서 만든 계정의 ID와 PIN을 입력하세요</p>
-            <label>ID (8자리) <input id="loginId" type="text" maxlength="8" spellcheck="false" placeholder="abc12345" /></label>
-            <label>PIN <input id="loginPin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
-            <div class="acct-actions">
-              <button class="code-btn apply-btn" onclick="acctLogin()">로그인</button>
-              <button class="code-btn" onclick="hideAcctPanel()">취소</button>
-            </div>
-            <p id="loginError" class="acct-error"></p>
-          </div>
-          <!-- SETTINGS -->
-          <div id="panelSettings" class="acct-panel-inner" style="display:none">
-            <h4>계정 설정</h4>
-            <div class="acct-setting-row">
-              <span>내 ID</span>
-              <code id="settingsId"></code>
-            </div>
-            <div class="acct-actions">
-              <button class="code-btn" onclick="copyCode()">코드 복사 (백업)</button>
-              <button class="code-btn clear-btn" onclick="clearAll()">전체 초기화</button>
-              <button class="code-btn" onclick="acctLogout()">로그아웃</button>
-              <button class="code-btn" onclick="hideAcctPanel()">닫기</button>
-            </div>
-          </div>
+          <p id="createError" class="acct-error"></p>
         </div>
-
-        <!-- Compare input (shared between states) -->
-        <div id="compareInputArea" class="acct-panel" style="display:none">
-          <div class="acct-panel-inner">
-            <h4>비교 / 교환</h4>
-            <p class="acct-hint">상대방의 ID 또는 컬렉션 코드를 입력하세요</p>
-            <input id="codeInput" type="text" spellcheck="false" placeholder="8자리 ID 또는 컬렉션 코드" />
-            <div class="acct-actions">
-              <button class="code-btn apply-btn" onclick="startCompare()">비교</button>
-              <button class="code-btn" onclick="importCode()">가져오기 (덮어쓰기)</button>
-              <button class="code-btn" onclick="hideCompareInput()">취소</button>
-            </div>
-            <span id="importFeedback" class="acct-error"></span>
+        <!-- LOGIN -->
+        <div id="panelLogin" class="acct-panel-inner" style="display:none">
+          <h4>로그인</h4>
+          <p class="acct-hint">다른 기기에서 만든 계정의 ID와 PIN을 입력하세요</p>
+          <label>ID (영문·숫자, 3~16자) <input id="loginId" type="text" maxlength="16" spellcheck="false" placeholder="myid123" /></label>
+          <label>PIN <input id="loginPin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
+          <div class="acct-actions">
+            <button class="code-btn apply-btn" onclick="acctLogin()">로그인</button>
+            <button class="code-btn" onclick="hideAcctPanel()">취소</button>
+          </div>
+          <p id="loginError" class="acct-error"></p>
+        </div>
+        <!-- SETTINGS -->
+        <div id="panelSettings" class="acct-panel-inner" style="display:none">
+          <h4>계정 설정</h4>
+          <div class="acct-setting-row">
+            <span>내 ID</span>
+            <code id="settingsId"></code>
+          </div>
+          <div class="acct-actions">
+            <button class="code-btn" onclick="copyCode()">코드 복사 (백업)</button>
+            <button class="code-btn clear-btn" onclick="clearAll()">전체 초기화</button>
+            <button class="code-btn" onclick="acctLogout()">로그아웃</button>
+            <button class="code-btn" onclick="hideAcctPanel()">닫기</button>
           </div>
         </div>
       </div>
+
+      <!-- Compare input dropdown -->
+      <div id="compareInputArea" class="acct-panel" style="display:none">
+        <div class="acct-panel-inner">
+          <h4>비교 / 교환</h4>
+          <p class="acct-hint">상대방의 ID 또는 컬렉션 코드를 입력하세요</p>
+          <input id="codeInput" type="text" spellcheck="false" placeholder="ID 또는 컬렉션 코드" />
+          <div class="acct-actions">
+            <button class="code-btn apply-btn" onclick="startCompare()">비교</button>
+            <button class="code-btn" onclick="importCode()">가져오기 (덮어쓰기)</button>
+            <button class="code-btn" onclick="hideCompareInput()">취소</button>
+          </div>
+          <span id="importFeedback" class="acct-error"></span>
+        </div>
+      </div>
     </div>
-  </header>
+  </div>
 
   <!-- Profile view banner (viewing someone else's collection) -->
   <div id="profileBanner" style="display:none">
@@ -572,7 +580,8 @@
 
     function copyCode() {
       navigator.clipboard.writeText(encodeCollection())
-        .then(() => showFeedback('copyFeedback', '코드 복사됨! ✓', 'feedback-ok'));
+        .then(() => showFeedback('copyFeedback', '코드 복사됨! ✓', 'feedback-ok'))
+        .catch(() => showFeedback('copyFeedback', '복사 실패 (권한 거부)', 'feedback-err'));
     }
 
     // ── Account system ───────────────────────────────────────
@@ -697,7 +706,8 @@
 
     function copyAcctId() {
       navigator.clipboard.writeText(getAcctId())
-        .then(() => showFeedback('copyFeedback2', 'ID 복사됨! ✓', 'feedback-ok'));
+        .then(() => showFeedback('copyFeedback2', 'ID 복사됨! ✓', 'feedback-ok'))
+        .catch(() => showFeedback('copyFeedback2', '복사 실패 (권한 거부)', 'feedback-err'));
     }
 
     function shareLink() {
@@ -706,7 +716,8 @@
       const url  = id ? base + '#u=' + id : base + '#c=' + encodeCollection();
       const fbId = isLoggedIn() ? 'copyFeedback2' : 'copyFeedback';
       navigator.clipboard.writeText(url)
-        .then(() => showFeedback(fbId, '링크 복사됨! ✓', 'feedback-ok'));
+        .then(() => showFeedback(fbId, '링크 복사됨! ✓', 'feedback-ok'))
+        .catch(() => showFeedback(fbId, '복사 실패 (권한 거부)', 'feedback-err'));
     }
 
     // ── Auto-sync (debounced cloud save) ─────────────────────
@@ -716,9 +727,12 @@
     function setSyncStatus(state) {
       const el = document.getElementById('syncStatus');
       if (!el) return;
-      if (state === 'saved')   { el.textContent = '동기화됨';   el.className = 'sync-status sync-ok'; }
-      if (state === 'pending') { el.textContent = '저장 중…';   el.className = 'sync-status sync-pending'; }
-      if (state === 'error')   { el.textContent = '동기화 실패'; el.className = 'sync-status sync-err'; }
+      if (state === 'saved')   { el.innerHTML = '동기화됨';   el.className = 'sync-status sync-ok'; }
+      if (state === 'pending') { el.innerHTML = '저장 중…';   el.className = 'sync-status sync-pending'; }
+      if (state === 'error')   {
+        el.innerHTML = '동기화 실패 <button class="sync-retry-btn" onclick="doSync()">재시도</button>';
+        el.className = 'sync-status sync-err';
+      }
     }
 
     function scheduleSync() {
@@ -783,6 +797,8 @@
     let _savedOwnedForProfile = null;
 
     async function enterProfileView(id) {
+      const banner = document.getElementById('profileBanner');
+      if (banner) { banner.style.display = 'flex'; document.getElementById('profileLabel').textContent = '불러오는 중…'; }
       try {
         profileCode = await fetchCloudCode(id);
         profileId   = id;
@@ -794,7 +810,9 @@
         document.getElementById('profileBanner').style.display = 'flex';
         showCollection(document.querySelector('.collection-tab'));
       } catch {
+        if (banner) banner.style.display = 'none';
         history.replaceState(null, '', location.pathname);
+        alert('해당 ID를 찾을 수 없습니다');
       }
     }
 
@@ -840,8 +858,14 @@
 
       let code = val;
       if (CLOUD_ID_RE.test(val)) {
+        const btn = document.querySelector('#compareInputArea .apply-btn');
+        const orig = btn.textContent;
+        btn.textContent = '불러오는 중…';
+        btn.disabled = true;
         try { code = await fetchCloudCode(val); }
-        catch (e) { showFeedback('importFeedback', e.message, 'feedback-err'); return; }
+        catch (e) { showFeedback('importFeedback', e.message, 'feedback-err'); btn.textContent = orig; btn.disabled = false; return; }
+        btn.textContent = orig;
+        btn.disabled = false;
       }
 
       try {
@@ -993,6 +1017,13 @@
     window.addEventListener('load', () => {
       document.getElementById('codeInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') startCompare();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          closeModal();
+          hideAcctPanel();
+          hideCompareInput();
+        }
       });
       refreshAcctUI();
       const hash = location.hash;
