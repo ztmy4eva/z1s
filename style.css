@@ -56,6 +56,39 @@ body {
   position: relative;
 }
 
+.coll-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.coll-search-wrap {
+  flex: 1;
+  min-width: 120px;
+  max-width: 280px;
+}
+
+#cardSearch {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px 6px 28px;
+  font-size: 13px;
+  border: 1px solid #d0d5dd;
+  border-radius: 20px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 9px center;
+  outline: none;
+  transition: border-color 0.15s;
+}
+#cardSearch:focus {
+  border-color: #1a1a2e;
+}
+#cardSearch::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
 .coll-acct-area {
   display: flex;
   align-items: center;
@@ -173,6 +206,16 @@ button.active {
   padding: 20px;
   grid-template-columns: repeat(auto-fill, 160px);
   gap: 20px;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.grid-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  color: #aaa;
+  font-size: 14px;
+  margin: 0;
 }
 
 /* ── Card wrap ───────────────────────────────────────────── */
@@ -1326,6 +1369,14 @@ button.active {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .coll-left {
+    width: 100%;
+  }
+
+  .coll-search-wrap {
+    max-width: 100%;
   }
 
   .coll-acct-area {
