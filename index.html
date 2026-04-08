@@ -48,7 +48,8 @@
           <!-- CREATE -->
           <div id="panelCreate" class="acct-panel-inner" style="display:none">
             <h4>계정 만들기</h4>
-            <p class="acct-hint">다른 기기에서 컬렉션을 불러오려면 PIN이 필요합니다</p>
+            <p class="acct-hint">영문·숫자 3~16자 ID와 숫자 4자리 PIN으로 계정을 만듭니다</p>
+            <label>ID (영문·숫자, 3~16자) <input id="createId" type="text" maxlength="16" placeholder="myid123" autocomplete="off" /></label>
             <label>PIN (숫자 4자리) <input id="createPin" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
             <label>PIN 확인 <input id="createPinConfirm" type="password" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="1234" /></label>
             <div class="acct-actions">
@@ -621,11 +622,13 @@
 
     // ── Create account ───────────────────────────────────────
     async function acctCreate() {
+      const chosenId = document.getElementById('createId').value.trim().toLowerCase();
       const pin     = document.getElementById('createPin').value.trim();
       const confirm = document.getElementById('createPinConfirm').value.trim();
       const errEl   = document.getElementById('createError');
       errEl.textContent = '';
 
+      if (!/^[a-z0-9]{3,16}$/.test(chosenId)) { errEl.textContent = 'ID는 영문/숫자 3~16자입니다'; return; }
       if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'PIN은 숫자 4자리입니다'; return; }
       if (pin !== confirm)       { errEl.textContent = 'PIN이 일치하지 않습니다'; return; }
 
@@ -634,7 +637,7 @@
         const resp = await fetch('/api/collection', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, pin }),
+          body: JSON.stringify({ chosenId, code, pin }),
         });
         const data = await resp.json();
         if (!resp.ok) { errEl.textContent = data.error; return; }

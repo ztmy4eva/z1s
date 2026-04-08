@@ -1,4 +1,4 @@
-const ID_RE  = /^[a-z0-9]{8}$/;
+const ID_RE  = /^[a-z0-9]{3,16}$/;
 const PIN_RE = /^\d{4}$/;
 const TTL    = 60 * 60 * 24 * 365; // 1 year
 
@@ -79,13 +79,20 @@ export async function onRequestPost({ request, env }) {
     return json({ id, updated: now });
   }
 
-  // CREATE new
+  // CREATE new — use user-chosen ID if provided, else auto-generate
   let newId;
-  for (let i = 0; i < 10; i++) {
-    const candidate = generateId();
-    if (!(await env.COLLECTIONS.get(candidate))) { newId = candidate; break; }
+  if (body.chosenId) {
+    const chosen = String(body.chosenId).toLowerCase().trim();
+    if (!ID_RE.test(chosen)) return err('ID는 영문/숫자 3~16자입니다');
+    if (await env.COLLECTIONS.get(chosen)) return err('이미 사용 중인 ID입니다', 409);
+    newId = chosen;
+  } else {
+    for (let i = 0; i < 10; i++) {
+      const candidate = generateId();
+      if (!(await env.COLLECTIONS.get(candidate))) { newId = candidate; break; }
+    }
+    if (!newId) return err('Could not generate ID, try again', 503);
   }
-  if (!newId) return err('Could not generate ID, try again', 503);
 
   const data = JSON.stringify({ code, pin, updated: now });
   await env.COLLECTIONS.put(newId, data, { expirationTtl: TTL });
