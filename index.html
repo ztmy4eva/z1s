@@ -16,7 +16,6 @@
       <button onclick="showSeason('3', this)">시즌3</button>
       <button onclick="showSeason('4', this)">시즌4</button>
       <button class="collection-tab" onclick="showCollection(this)">컬렉션</button>
-      <button class="summary-tab" onclick="showSummary(this)">요약</button>
       <a class="buy-btn" href="https://zutomayomart.net/product/list?tag_codes=ZMT-T-014" target="_blank" rel="noopener">즛카드 구매</a>
     </div>
   </header>
@@ -157,6 +156,10 @@
     <aside class="sidebar disabled" id="sidebar">
       <!-- Collection season picker (collection mode only, at top) -->
       <div id="collSeasonNav" style="display:none">
+        <h3>보기</h3>
+        <button class="coll-season-btn active" id="collViewCards" onclick="showCollectionCards(this)">카드</button>
+        <button class="coll-season-btn" id="collViewSummary" onclick="showSummary(this)">요약</button>
+        <hr />
         <h3>시즌</h3>
         <button class="coll-season-btn" onclick="setCollectionSeason('1', this)">시즌1</button>
         <button class="coll-season-btn" onclick="setCollectionSeason('2', this)">시즌2</button>
@@ -491,7 +494,12 @@
       document.getElementById('collTopBar').style.display    = 'flex';
       document.getElementById('collSeasonNav').style.display = 'block';
       clearActive('.coll-season-btn');
-      document.querySelector('.coll-season-btn').classList.add('active');
+      document.getElementById('collViewCards').classList.add('active');
+      // activate first season button (시즌1, 3rd .coll-season-btn after the two view buttons)
+      const seasonBtns = document.querySelectorAll('.coll-season-btn');
+      seasonBtns.forEach(b => b.classList.remove('active'));
+      document.getElementById('collViewCards').classList.add('active');
+      seasonBtns[2].classList.add('active'); // 시즌1 is index 2 (after 카드, 요약)
       collSeason = '1';
       setOwnershipVisibility(true);
       buildProgress();
@@ -501,7 +509,15 @@
     function setCollectionSeason(s, btn) {
       collSeason = s;
       clearActive('.coll-season-btn');
+      document.getElementById('collViewCards').classList.add('active');
       btn.classList.add('active');
+      // if currently in summary, switch back to card view
+      if (viewMode === 'summary') {
+        viewMode = 'collection';
+        document.getElementById('summaryView').style.display = 'none';
+        grid.style.display = 'grid';
+        setOwnershipVisibility(true);
+      }
       renderCards();
     }
 
@@ -1254,14 +1270,29 @@
       viewMode = 'summary';
       hideCompareUI();
       clearActive('.top-left button');
-      btn.classList.add('active');
+      document.querySelector('.collection-tab').classList.add('active');
       overview.style.display = 'none';
       grid.style.display     = 'none';
-      sidebar.style.display  = 'none';
-      document.getElementById('collTopBar').style.display    = 'none';
-      document.getElementById('collSeasonNav').style.display = 'none';
+      sidebar.style.display  = '';
+      document.getElementById('collTopBar').style.display    = 'flex';
+      document.getElementById('collSeasonNav').style.display = 'block';
       setOwnershipVisibility(false);
+      // toggle view buttons
+      document.getElementById('collViewCards').classList.remove('active');
+      document.getElementById('collViewSummary').classList.add('active');
       renderSummary();
+    }
+
+    function showCollectionCards(btn) {
+      // Switch from summary back to card grid without re-entering collection mode fully
+      viewMode = 'collection';
+      document.getElementById('summaryView').style.display = 'none';
+      grid.style.display = 'grid';
+      setOwnershipVisibility(true);
+      document.getElementById('collViewSummary').classList.remove('active');
+      document.getElementById('collViewCards').classList.add('active');
+      buildProgress();
+      renderCards();
     }
 
     function renderSummary() {

@@ -102,11 +102,6 @@ body {
   color: #e0e0ff !important;
   border-color: #1a1a2e !important;
 }
-.summary-tab {
-  background: #263238 !important;
-  color: #cfd8dc !important;
-  border-color: #263238 !important;
-}
 
 .collection-tab.active,
 .collection-tab:hover {
@@ -551,11 +546,6 @@ button.active {
 .collection-tab.active,
 .collection-tab:hover {
   background: #3a3a6e !important;
-  color: #fff !important;
-}
-.summary-tab.active,
-.summary-tab:hover {
-  background: #37474f !important;
   color: #fff !important;
 }
 
