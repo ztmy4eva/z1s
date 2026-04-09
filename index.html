@@ -25,6 +25,7 @@
     <!-- Left: view toggle + progress + search -->
     <div class="coll-left">
       <div class="collection-progress" id="collectionProgress"></div>
+      <button class="summary-tab-btn" onclick="showSummary()">📋 요약</button>
       <div class="coll-search-wrap" id="collSearchWrap">
         <input id="cardSearch" type="search" placeholder="카드 이름 검색…" autocomplete="off" oninput="renderCards()" />
       </div>
@@ -38,7 +39,6 @@
         <button class="code-btn cloud-btn" onclick="showAcctPanel('create')">계정 만들기</button>
         <button class="code-btn" onclick="showAcctPanel('login')">로그인</button>
         <span id="copyFeedback"></span>
-        <button class="acct-icon-btn" id="summaryBtnLoggedOut" onclick="showSummary()" title="요약">📋</button>
       </div>
 
       <!-- Logged-in -->
@@ -51,7 +51,6 @@
         <span id="copyFeedback2" class="acct-copy-feedback"></span>
         <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
         <div class="acct-icon-group">
-          <button class="acct-icon-btn" id="summaryBtnLoggedIn" onclick="showSummary()" title="요약">📋</button>
           <button class="acct-icon-btn" onclick="shareLink()" title="링크 복사">🔗</button>
           <button class="acct-icon-btn" onclick="printCollection()" title="PDF 출력">🖨</button>
           <button class="acct-icon-btn" onclick="showAcctPanel('settings')" title="설정">⚙</button>
@@ -93,7 +92,7 @@
             <code id="settingsId"></code>
           </div>
           <div class="acct-actions">
-            <button class="code-btn" onclick="copyCode()">코드 복사 (백업)</button>
+            <button class="code-btn" onclick="copyMissingList()">📋 미보유 목록 복사</button>
             <button class="code-btn clear-btn" onclick="clearAll()">전체 초기화</button>
             <button class="code-btn" onclick="acctLogout()">로그아웃</button>
             <button class="code-btn" onclick="hideAcctPanel()">닫기</button>
@@ -591,6 +590,29 @@
       el.textContent = text;
       el.className = cls;
       setTimeout(() => { el.textContent = ''; el.className = ''; }, 2500);
+    }
+
+    function copyMissingList() {
+      const RARITIES = ['UR','SR','R','N','SE'];
+      const SEASONS  = ['1','2','3','4'];
+      const lines    = [];
+      SEASONS.forEach(s => {
+        RARITIES.forEach(r => {
+          const cards = CARDS.filter(c =>
+            c.season === s &&
+            (c.rarity === r || (r === 'SE' && c.rarity === 'SEC')) &&
+            !isOwned(c.src)
+          ).sort((a, b) => cardNum(a.src) - cardNum(b.src));
+          if (cards.length === 0) return;
+          lines.push(`[시즌${s} ${r}]`);
+          cards.forEach(c => lines.push(`S${s}-${String(cardNum(c.src)).padStart(3,'0')} ${c.name}`));
+        });
+      });
+      const fbId = document.getElementById('svCopyFeedback') ? 'svCopyFeedback' : 'copyFeedback2';
+      if (lines.length === 0) { showFeedback(fbId, '미보유 카드 없음 ✓', 'feedback-ok'); return; }
+      navigator.clipboard.writeText(lines.join('\n'))
+        .then(() => showFeedback(fbId, '미보유 목록 복사됨! ✓', 'feedback-ok'))
+        .catch(() => showFeedback(fbId, '복사 실패 (권한 거부)', 'feedback-err'));
     }
 
     function copyCode() {
@@ -1218,6 +1240,12 @@
 </style>
 </head><body>
 
+  <div style="position:sticky;top:0;z-index:999;background:#1a1a2e;padding:10px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <button onclick="window.print()" style="padding:8px 18px;font-size:14px;font-weight:700;border:none;border-radius:6px;background:#69f0ae;color:#1a1a2e;cursor:pointer">🖨 인쇄 / PDF 저장</button>
+    <button onclick="window.close()" style="padding:8px 18px;font-size:14px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:transparent;color:#e0e0ff;cursor:pointer">닫기</button>
+    <span style="font-size:12px;color:rgba(255,255,255,0.5)">인쇄 대화상자에서 "PDF로 저장"을 선택하세요. 머리글/바닥글을 끄면 더 깔끔합니다.</span>
+  </div>
+
   <!-- Cover / summary page -->
   <div class="cover">
     <div class="cover-top">
@@ -1237,7 +1265,6 @@
 
   ${seasonBlocks}
 
-  <script>window.onload = () => window.print();<\/script>
 </body></html>`;
 
       const w = window.open('', '_blank');
@@ -1294,23 +1321,22 @@
       const duplicates  = totalCopies - ownedUnique;
       const pct         = Math.round(ownedUnique / totalCards * 100);
 
-      // ── Per-season rarity breakdown ──
+      // ── Per-season rarity breakdown (stat table) ──
       const seasonTable = SEASONS.map(s => {
         const sc = CARDS.filter(c => c.season === s);
         const rows = RARITIES.map(r => {
           const total = sc.filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC')).length;
           if (total === 0) return null;
           const owned = sc.filter(c => (c.rarity === r || (r === 'SE' && c.rarity === 'SEC')) && isOwned(c.src)).length;
-          const pct   = Math.round(owned / total * 100);
-          const bar   = `<span class="sv-bar"><span class="sv-bar-fill" style="width:${pct}%;background:${RC[r]}"></span></span>`;
+          const rPct  = Math.round(owned / total * 100);
+          const bar   = `<span class="sv-bar"><span class="sv-bar-fill" style="width:${rPct}%;background:${RC[r]}"></span></span>`;
           return `<tr>
             <td><span class="sv-rarity" style="color:${RC[r]}">${r}</span></td>
             <td class="sv-frac">${owned}<span class="sv-total">/${total}</span></td>
             <td>${bar}</td>
-            <td class="sv-pct ${pct === 100 ? 'sv-complete' : ''}">${pct}%</td>
+            <td class="sv-pct ${rPct === 100 ? 'sv-complete' : ''}">${rPct}%</td>
           </tr>`;
         }).filter(Boolean).join('');
-
         const sOwned = sc.filter(c => isOwned(c.src)).length;
         const sPct   = Math.round(sOwned / sc.length * 100);
         return `<div class="sv-season-block">
@@ -1323,66 +1349,56 @@
         </div>`;
       }).join('');
 
-      // ── Owned card list, grouped by season ──
-      const cardList = SEASONS.map(s => {
-        const owned = CARDS
-          .filter(c => c.season === s && isOwned(c.src))
-          .sort((a, b) => cardNum(a.src) - cardNum(b.src));
-        if (owned.length === 0) return '';
-
-        const items = owned.map(c => {
-          const n   = cardNum(c.src);
-          const cnt = getCount(c.src);
-          const dup = cnt > 1;
-          return `<span class="sv-chip ${dup ? 'sv-chip-dup' : ''}" style="border-color:${RC[c.rarity] || '#999'}" title="${c.name}">
-            S${s}-${String(n).padStart(3,'0')}${dup ? ` ×${cnt}` : ''}
-          </span>`;
-        }).join('');
-
+      // ── Unified card list: season → rarity, owned colored, unowned greyed ──
+      const unifiedGrid = SEASONS.map(s => {
+        const sc = CARDS.filter(c => c.season === s);
+        const rarityGroups = RARITIES.map(r => {
+          const cards = sc
+            .filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC'))
+            .sort((a, b) => cardNum(a.src) - cardNum(b.src));
+          if (cards.length === 0) return '';
+          const chips = cards.map(c => {
+            const owned = isOwned(c.src);
+            const cnt   = getCount(c.src);
+            const n     = cardNum(c.src);
+            const label = `S${s}-${String(n).padStart(3,'0')}${cnt > 1 ? ` ×${cnt}` : ''}`;
+            if (owned) {
+              const col = cnt > 1 ? '#e65100' : (RC[r] || '#999');
+              const cls = cnt > 1 ? 'sv-chip sv-chip-dup' : 'sv-chip';
+              return `<span class="${cls}" style="border-color:${col}" title="${c.name}">${label}</span>`;
+            }
+            return `<span class="sv-chip sv-chip-unowned" title="${c.name}">${label}</span>`;
+          }).join('');
+          return `<div class="sv-unified-rarity">
+            <span class="sv-rarity sv-unified-r" style="color:${RC[r]}">${r}</span>
+            <div class="sv-chips">${chips}</div>
+          </div>`;
+        }).filter(Boolean).join('');
+        const sOwned = sc.filter(c => isOwned(c.src)).length;
         return `<div class="sv-chip-group">
-          <div class="sv-chip-season">시즌 ${s}</div>
-          <div class="sv-chips">${items}</div>
+          <div class="sv-chip-season">시즌 ${s} <span class="sv-season-frac">${sOwned} / ${sc.length}</span></div>
+          ${rarityGroups}
         </div>`;
       }).join('');
 
-      // ── Duplicates list ──
+      // ── Duplicates ──
       let dupSection = '';
       const dups = CARDS.filter(c => getCount(c.src) > 1)
         .sort((a, b) => (b.rarity < a.rarity ? -1 : 1) || cardNum(a.src) - cardNum(b.src));
       if (dups.length > 0) {
-        const dupItems = dups.map(c => {
-          const n   = cardNum(c.src);
-          const cnt = getCount(c.src);
-          return `<div class="sv-dup-row">
+        const dupItems = dups.map(c => `<div class="sv-dup-row">
             <span class="sv-rarity" style="color:${RC[c.rarity] || '#999'}">${c.rarity}</span>
-            <span class="sv-dup-id">S${c.season}-${String(n).padStart(3,'0')}</span>
+            <span class="sv-dup-id">S${c.season}-${String(cardNum(c.src)).padStart(3,'0')}</span>
             <span class="sv-dup-name">${c.name}</span>
-            <span class="sv-dup-cnt">×${cnt}</span>
-          </div>`;
-        }).join('');
+            <span class="sv-dup-cnt">×${getCount(c.src)}</span>
+          </div>`).join('');
         dupSection = `<section class="sv-section">
           <h2 class="sv-section-title">여분 카드 <span class="sv-badge">${dups.length}종</span></h2>
           <div class="sv-dup-list">${dupItems}</div>
         </section>`;
       }
 
-      // ── Missing card list ──
       const missing = CARDS.filter(c => !isOwned(c.src));
-      const missByRarity = RARITIES.map(r => {
-        const cards = missing.filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC'));
-        if (!cards.length) return '';
-        const chips = cards.sort((a,b) => cardNum(a.src) - cardNum(b.src)).map(c =>
-          `<span class="sv-chip sv-chip-miss" title="${c.name}">S${c.season}-${String(cardNum(c.src)).padStart(3,'0')}</span>`
-        ).join('');
-        return `<div class="sv-miss-rarity">
-          <span class="sv-rarity sv-miss-r" style="color:${RC[r]}">${r} (${cards.length})</span>
-          <div class="sv-chips">${chips}</div>
-        </div>`;
-      }).filter(Boolean).join('');
-      const missingSection = missing.length > 0 ? `<section class="sv-section">
-        <h2 class="sv-section-title">미보유 카드 <span class="sv-badge sv-badge-miss">${missing.length}장</span></h2>
-        <div class="sv-miss-list">${missByRarity}</div>
-      </section>` : `<section class="sv-section"><p class="sv-complete-msg">모든 카드를 보유하고 있습니다!</p></section>`;
 
       el.innerHTML = `
         <div class="sv-wrap">
@@ -1401,9 +1417,15 @@
               </div>
             </div>
             <div class="sv-meta">
-              <div class="sv-meta-item sv-meta-big"><strong>${pct}%</strong><span class="sv-meta-sub">완성</span></div>
+              <div class="sv-meta-item"><strong>${pct}%</strong><span class="sv-meta-sub">완성</span></div>
               <div class="sv-meta-item"><strong>${totalCopies}</strong><span class="sv-meta-sub">총 보유</span></div>
               ${duplicates > 0 ? `<div class="sv-meta-item sv-meta-dup"><strong>${duplicates}</strong><span class="sv-meta-sub">여분</span></div>` : ''}
+              ${missing.length > 0 ? `<div class="sv-meta-item sv-meta-miss"><strong>${missing.length}</strong><span class="sv-meta-sub">미보유</span></div>` : ''}
+            </div>
+            <div class="sv-hero-actions">
+              <button class="code-btn" onclick="printCollection()">🖨 PDF 출력</button>
+              <button class="code-btn" onclick="copyMissingList()">📋 미보유 목록 복사</button>
+              <span id="svCopyFeedback" style="font-size:12px"></span>
             </div>
           </header>
 
@@ -1413,20 +1435,20 @@
           </section>
 
           <section class="sv-section">
-            <h2 class="sv-section-title">보유 카드 목록</h2>
+            <h2 class="sv-section-title">카드 목록
+              <span class="sv-badge" style="background:#2e7d32">${ownedUnique} 보유</span>
+              ${missing.length > 0 ? `<span class="sv-badge sv-badge-miss">${missing.length} 미보유</span>` : ''}
+            </h2>
             <div class="sv-legend">
-              <span class="sv-chip" style="border-color:#b8860b">UR</span>
-              <span class="sv-chip" style="border-color:#7b5ea7">SR</span>
-              <span class="sv-chip" style="border-color:#1565c0">R</span>
-              <span class="sv-chip" style="border-color:#666">N</span>
-              <span class="sv-chip" style="border-color:#ad1457">SE</span>
+              <span class="sv-chip" style="border-color:#b8860b">UR 보유</span>
               <span class="sv-chip sv-chip-dup" style="border-color:#e65100">여분 ×N</span>
+              <span class="sv-chip sv-chip-unowned">미보유</span>
             </div>
-            ${cardList || '<p class="sv-empty">보유 카드가 없습니다</p>'}
+            ${unifiedGrid}
           </section>
 
           ${dupSection}
-          ${missingSection}
+          ${missing.length === 0 ? '<section class="sv-section"><p class="sv-complete-msg">모든 카드를 보유하고 있습니다! 🎉</p></section>' : ''}
 
         </div>`;
     }

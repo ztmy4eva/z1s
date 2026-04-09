@@ -103,6 +103,25 @@ body {
   cursor: pointer;
 }
 
+/* ── 요약 prominent button (in coll-left) ────────────────── */
+.summary-tab-btn {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1.5px solid #1a1a2e;
+  background: #fff;
+  color: #1a1a2e;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.summary-tab-btn:hover {
+  background: #1a1a2e;
+  color: #e0e0ff;
+}
+
 .coll-acct-area {
   display: flex;
   align-items: center;
@@ -801,6 +820,13 @@ button.active {
   color: #e65100;
   border-color: #e65100;
 }
+.sv-chip-unowned {
+  background: #fafafa;
+  color: #bbb;
+  border-color: rgba(183,28,28,0.2);
+  border-style: dashed;
+}
+
 .sv-chip-miss {
   background: #f5f5f5;
   color: #bbb;
@@ -1271,6 +1297,34 @@ button.active {
   font-weight: bold;
   flex-shrink: 0;
 }
+
+/* ── Unified card list (요약) ────────────────────────────── */
+.sv-unified-rarity {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.sv-unified-r {
+  min-width: 28px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+/* ── Hero action buttons ─────────────────────────────────── */
+.sv-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* ── Meta: missing stat ──────────────────────────────────── */
+.sv-meta-miss strong { color: #ef5350; }
 
 /* ═══════════════════════════════════════════════════════════
    MOBILE / RESPONSIVE
