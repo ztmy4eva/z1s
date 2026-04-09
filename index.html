@@ -680,8 +680,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chosenId, code, pin }),
         });
-        const data = await resp.json();
-        if (!resp.ok) { errEl.textContent = data.error; return; }
+        let data;
+        try { data = await resp.json(); } catch { data = {}; }
+        if (!resp.ok) { errEl.textContent = data.error || `서버 오류 (${resp.status})`; return; }
 
         localStorage.setItem(ACCT_ID_KEY, data.id);
         localStorage.setItem(ACCT_PIN_KEY, pin);
@@ -690,7 +691,7 @@
         setSyncStatus('saved');
         showFeedback('copyFeedback2', '계정 생성됨! ID: ' + data.id, 'feedback-ok');
       } catch (e) {
-        errEl.textContent = '서버 오류, 다시 시도해주세요';
+        errEl.textContent = '네트워크 오류 — 인터넷 연결을 확인하세요';
       }
     }
 
@@ -710,8 +711,9 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id, pin, login: true }),
         });
-        const data = await resp.json();
-        if (!resp.ok) { errEl.textContent = data.error; return; }
+        let data;
+        try { data = await resp.json(); } catch { data = {}; }
+        if (!resp.ok) { errEl.textContent = data.error || `서버 오류 (${resp.status})`; return; }
 
         // Load the cloud collection
         ownedCards = decodeCollection(data.code);
