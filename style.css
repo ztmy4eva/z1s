@@ -1631,13 +1631,13 @@ button.active {
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   overflow: hidden;
-  width: 200px;
+  width: 500px;
 }
 .hover-preview.visible {
   display: block;
 }
 .hover-preview img {
-  width: 200px;
+  width: 500px;
   display: block;
 }
 

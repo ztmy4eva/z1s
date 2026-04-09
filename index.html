@@ -278,11 +278,13 @@
       hp.innerHTML = `<img src="${c.src}" alt="${c.name}">`;
       hp.classList.add('visible');
       const rect = el.getBoundingClientRect();
+      const PW = 500, PH = 700;
       let left = rect.right + 10;
       let top  = rect.top;
-      if (left + 210 > window.innerWidth) left = rect.left - 210;
-      if (top + 280 > window.innerHeight) top = window.innerHeight - 280;
-      if (top < 0) top = 0;
+      if (left + PW > window.innerWidth)  left = rect.left - PW - 10;
+      if (left < 0) left = 10;
+      if (top + PH > window.innerHeight)  top = window.innerHeight - PH - 10;
+      if (top < 0) top = 10;
       hp.style.left = left + 'px';
       hp.style.top  = top  + 'px';
     }
