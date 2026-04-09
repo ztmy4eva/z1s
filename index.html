@@ -424,6 +424,8 @@
           badge.append(dec, num, inc);
           wrap.appendChild(badge);
 
+          wrap.addEventListener('mouseenter', () => showHoverPreview(c, wrap));
+          wrap.addEventListener('mouseleave', hideHoverPreview);
           wrap.onclick = () => {
             if (!isOwned(c.src)) {
               ownedCards.set(c.src, 1);
@@ -434,10 +436,8 @@
             }
           };
         } else {
-          // Browse mode: click to open modal, hover preview, right-click to wishlist
+          // Browse mode: click to open modal, right-click to wishlist
           wrap.onclick = () => openModal(c);
-          wrap.addEventListener('mouseenter', () => showHoverPreview(c, wrap));
-          wrap.addEventListener('mouseleave', hideHoverPreview);
           wrap.addEventListener('contextmenu', e => {
             e.preventDefault();
             if (isWished(c.src)) { wishlist.delete(c.src); } else { wishlist.add(c.src); }
