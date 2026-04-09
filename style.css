@@ -121,6 +121,10 @@ body {
   background: #1a1a2e;
   color: #e0e0ff;
 }
+.summary-tab-btn.active {
+  background: #1a1a2e;
+  color: #e0e0ff;
+}
 
 .coll-acct-area {
   display: flex;
@@ -1323,6 +1327,22 @@ button.active {
   margin-top: 10px;
 }
 
+/* Small text-link buttons inside sv-hero-actions */
+.sv-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.sv-link-btn:hover {
+  text-decoration: underline;
+  color: #fff;
+}
+
 /* ── Meta: missing stat ──────────────────────────────────── */
 .sv-meta-miss strong { color: #ef5350; }
 
@@ -1600,5 +1620,166 @@ button.active {
     padding: 6px 12px;
     font-size: 13px;
   }
+}
+
+/* ── Hover preview (browse mode) ────────────────────────── */
+.hover-preview {
+  position: fixed;
+  z-index: 500;
+  pointer-events: none;
+  display: none;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  overflow: hidden;
+  width: 200px;
+}
+.hover-preview.visible {
+  display: block;
+}
+.hover-preview img {
+  width: 200px;
+  display: block;
+}
+
+/* ── Wishlist star badge ─────────────────────────────────── */
+.wish-badge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+/* ── Modal like section ──────────────────────────────────── */
+.modal-like-section {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #eee;
+  text-align: center;
+}
+.like-btn {
+  background: none;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  color: #555;
+}
+.like-btn:hover {
+  background: #fff0f0;
+  border-color: #f48fb1;
+}
+.like-btn.liked {
+  background: #fce4ec;
+  border-color: #e91e63;
+  color: #c2185b;
+}
+.like-btn.bump {
+  animation: likeBump 0.3s ease;
+}
+@keyframes likeBump {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+/* ── Likes ranking overlay ───────────────────────────────── */
+.likes-ranking-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.likes-ranking-inner {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 32px;
+  max-width: 560px;
+  width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+}
+.likes-ranking-inner h2 {
+  margin: 0 0 18px;
+  font-size: 18px;
+  color: #1a1a2e;
+}
+.likes-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.likes-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f9f9fb;
+  border: 1px solid #eee;
+}
+.likes-rank-num {
+  font-size: 18px;
+  font-weight: 900;
+  color: #bbb;
+  min-width: 28px;
+  text-align: center;
+}
+.likes-rank-num.gold   { color: #f9a825; }
+.likes-rank-num.silver { color: #90a4ae; }
+.likes-rank-num.bronze { color: #a1887f; }
+.likes-rank-img {
+  width: 48px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.likes-rank-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+.likes-rank-count {
+  font-size: 14px;
+  font-weight: 800;
+  color: #e91e63;
+}
+.likes-rank-close {
+  display: block;
+  margin: 18px auto 0;
+  padding: 8px 24px;
+  background: #1a1a2e;
+  color: #e0e0ff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.likes-rank-close:hover { background: #3a3a6e; }
+
+/* ── Overview likes button ───────────────────────────────── */
+.overview-likes-btn {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 8px 20px;
+  background: #fff;
+  border: 1.5px solid #e91e63;
+  border-radius: 20px;
+  color: #c2185b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.overview-likes-btn:hover {
+  background: #fce4ec;
 }
 

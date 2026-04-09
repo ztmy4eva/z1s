@@ -131,6 +131,7 @@
     <div class="compare-stats" id="compareStats"></div>
     <div class="shared-actions">
       <button class="code-btn" id="compareFilterBtn" onclick="cycleCompareFilter()">전체 보기</button>
+      <button class="code-btn" onclick="shareCmpLink()">🔗 링크 복사</button>
       <button class="code-btn" onclick="exitCompare()">비교 종료</button>
     </div>
   </div>
@@ -166,8 +167,15 @@
       <!-- Ownership filter (collection mode only) -->
       <div id="ownership-section" style="display:none">
         <h3>보유 여부</h3>
-        <button class="ownership-btn" id="own-btn-owned"   onclick="filterOwnership('owned', this)">보유</button>
-        <button class="ownership-btn" id="own-btn-unowned" onclick="filterOwnership('unowned', this)">미보유</button>
+        <button class="ownership-btn" id="own-btn-owned"    onclick="filterOwnership('owned', this)">보유</button>
+        <button class="ownership-btn" id="own-btn-unowned"  onclick="filterOwnership('unowned', this)">미보유</button>
+        <button class="ownership-btn" id="own-btn-wishlist" onclick="filterOwnership('wishlist', this)">⭐ 위시리스트</button>
+        <hr />
+      </div>
+      <!-- Wishlist filter (browse mode) -->
+      <div id="browse-wishlist-section">
+        <h3>위시리스트</h3>
+        <button class="ownership-btn" id="own-btn-wish-browse" onclick="filterWishlistBrowse(this)">⭐ 위시리스트만</button>
         <hr />
       </div>
       <h3>카드 종류</h3>
@@ -185,7 +193,10 @@
 
       <div class="main-area">
         <div id="overview">
-          <img src="cards/zc123.png" class="overview-image">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <img src="cards/zc123.png" class="overview-image">
+            <button class="overview-likes-btn" onclick="showLikesRanking()">❤️ 인기 카드 TOP 10</button>
+          </div>
         </div>
         <main class="card-grid" id="cardGrid"></main>
         <div id="summaryView" style="display:none"></div>
@@ -201,7 +212,22 @@
         <table class="card-table">
           <tbody id="modalBody"></tbody>
         </table>
+        <div class="modal-like-section">
+          <button class="like-btn" id="likeBtn" onclick="likeCard()">❤️ <span id="likeCount">…</span></button>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Hover preview (browse mode) -->
+  <div id="hoverPreview" class="hover-preview"></div>
+
+  <!-- Likes ranking overlay -->
+  <div id="likesRanking" class="likes-ranking-overlay" style="display:none">
+    <div class="likes-ranking-inner">
+      <h2>❤️ 인기 카드 TOP 10</h2>
+      <div id="likesRankList" class="likes-rank-list"></div>
+      <button class="likes-rank-close" onclick="document.getElementById('likesRanking').style.display='none'">닫기</button>
     </div>
   </div>
 
@@ -216,6 +242,15 @@
     let compareCards      = null;   // Map<src, count> of the other user
     let compareFilter     = 'all';  // 'all' | 'need' | 'offer' | 'both'
     let isProfileView     = false;  // viewing someone else's collection (read-only)
+    let cmpPartnerId      = null;   // last compared partner ID
+    let _currentModalSrc  = null;   // currently open modal card src
+
+    // ── Wishlist ─────────────────────────────────────────────
+    let wishlist = new Set(JSON.parse(localStorage.getItem('zc_wishlist') || '[]'));
+    function saveWishlist() {
+      localStorage.setItem('zc_wishlist', JSON.stringify([...wishlist]));
+    }
+    function isWished(src) { return wishlist.has(src); }
 
     let ownedCards = (() => {
       const raw = JSON.parse(localStorage.getItem('zc_owned') || 'null');
@@ -237,6 +272,24 @@
     const sidebar   = document.getElementById('sidebar');
     const overview  = document.getElementById('overview');
 
+    // ── Hover preview ────────────────────────────────────────
+    function showHoverPreview(c, el) {
+      const hp = document.getElementById('hoverPreview');
+      hp.innerHTML = `<img src="${c.src}" alt="${c.name}">`;
+      hp.classList.add('visible');
+      const rect = el.getBoundingClientRect();
+      let left = rect.right + 10;
+      let top  = rect.top;
+      if (left + 210 > window.innerWidth) left = rect.left - 210;
+      if (top + 280 > window.innerHeight) top = window.innerHeight - 280;
+      if (top < 0) top = 0;
+      hp.style.left = left + 'px';
+      hp.style.top  = top  + 'px';
+    }
+    function hideHoverPreview() {
+      document.getElementById('hoverPreview').classList.remove('visible');
+    }
+
     // ── Render ─────────────────────────────────────────────
     function renderCards() {
       const isCollView   = viewMode === 'collection';
@@ -247,6 +300,8 @@
       const searchEl = document.getElementById('cardSearch');
       const searchQ  = searchEl ? searchEl.value.trim().toLowerCase() : '';
 
+      // Collect matching cards first, then sort
+      const matchingCards = [];
       for (const c of CARDS) {
         if (activeSeason !== 'all' && c.season !== activeSeason) continue;
         if (currentRarity    !== 'all' && c.rarity !== currentRarity) continue;
@@ -258,8 +313,9 @@
 
         // ownership filter (non-compare)
         if (!isCompare) {
-          if (currentOwnership === 'owned'   && !owned) continue;
-          if (currentOwnership === 'unowned' &&  owned) continue;
+          if (currentOwnership === 'owned'    && !owned)         continue;
+          if (currentOwnership === 'unowned'  &&  owned)         continue;
+          if (currentOwnership === 'wishlist' && !isWished(c.src)) continue;
         }
 
         // compare filter
@@ -271,6 +327,14 @@
           if (compareFilter === 'offer' && !iOffer)   continue;
           if (compareFilter === 'both'  && !bothHave) continue;
         }
+
+        matchingCards.push(c);
+      }
+
+      for (const c of matchingCards) {
+        const myCount    = getCount(c.src);
+        const owned      = myCount > 0;
+        const theirCount = isCompare ? (compareCards.get(c.src) || 0) : 0;
 
         const wrap = document.createElement('div');
         wrap.className = 'card-wrap' + (isCollView ? (owned ? ' owned' : ' unowned') : '');
@@ -370,7 +434,23 @@
             }
           };
         } else {
+          // Browse mode: click to open modal, hover preview, right-click to wishlist
           wrap.onclick = () => openModal(c);
+          wrap.addEventListener('mouseenter', () => showHoverPreview(c, wrap));
+          wrap.addEventListener('mouseleave', hideHoverPreview);
+          wrap.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (isWished(c.src)) { wishlist.delete(c.src); } else { wishlist.add(c.src); }
+            saveWishlist();
+            renderCards();
+          });
+          // Wishlist star badge
+          if (isWished(c.src)) {
+            const star = document.createElement('span');
+            star.className = 'wish-badge';
+            star.textContent = '⭐';
+            wrap.appendChild(star);
+          }
         }
         frag.appendChild(wrap);
       }
@@ -393,8 +473,9 @@
           const total = CARDS.filter(c => c.season === s).length;
           const owned = CARDS.filter(c => c.season === s && isOwned(c.src)).length;
           const pct   = total ? Math.round(owned / total * 100) : 0;
+          const medal = pct === 100 ? ' 🥇' : '';
           return `<div class="prog-item" id="prog-${s}">
-            <div class="prog-label">시즌${s}</div>
+            <div class="prog-label">시즌${s}${medal}</div>
             <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
             <div class="prog-count">${owned} / ${total}</div>
           </div>`;
@@ -410,6 +491,7 @@
         if (!item) return;
         item.querySelector('.prog-fill').style.width  = pct + '%';
         item.querySelector('.prog-count').textContent = `${owned} / ${total}`;
+        item.querySelector('.prog-label').textContent = `시즌${s}${pct === 100 ? ' 🥇' : ''}`;
       });
     }
 
@@ -420,6 +502,8 @@
 
     function hideSummary() {
       document.getElementById('summaryView').style.display = 'none';
+      const btn = document.querySelector('.summary-tab-btn');
+      if (btn) btn.classList.remove('active');
     }
 
     function hideCompareUI() {
@@ -451,6 +535,7 @@
       sidebar.classList.add('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
+      document.getElementById('browse-wishlist-section').style.display = 'none';
       setOwnershipVisibility(false);
       currentSeason = currentRarity = currentType = currentOwnership = 'all';
     }
@@ -467,6 +552,7 @@
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
+      document.getElementById('browse-wishlist-section').style.display = '';
       setOwnershipVisibility(false);
       currentSeason = season;
       renderCards();
@@ -487,6 +573,7 @@
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'flex';
       document.getElementById('collSeasonNav').style.display = 'block';
+      document.getElementById('browse-wishlist-section').style.display = 'none';
       clearActive('.coll-season-btn');
       document.querySelector('.coll-season-btn').classList.add('active'); // 시즌1
       document.getElementById('collSearchWrap').style.display = '';
@@ -521,6 +608,18 @@
     function filterOwnership(val, btn) {
       if (btn.classList.contains('active')) { btn.classList.remove('active'); currentOwnership = 'all'; }
       else { clearActive('.sidebar .ownership-btn'); btn.classList.add('active'); currentOwnership = val; }
+      renderCards();
+    }
+
+    function filterWishlistBrowse(btn) {
+      if (btn.classList.contains('active')) {
+        btn.classList.remove('active');
+        currentOwnership = 'all';
+      } else {
+        clearActive('.sidebar .ownership-btn');
+        btn.classList.add('active');
+        currentOwnership = 'wishlist';
+      }
       renderCards();
     }
 
@@ -897,6 +996,7 @@
 
       let code = val;
       if (CLOUD_ID_RE.test(val)) {
+        cmpPartnerId = val;
         const btn = document.querySelector('#compareInputArea .apply-btn');
         const orig = btn.textContent;
         btn.textContent = '불러오는 중…';
@@ -905,6 +1005,8 @@
         catch (e) { showFeedback('importFeedback', e.message, 'feedback-err'); btn.textContent = orig; btn.disabled = false; return; }
         btn.textContent = orig;
         btn.disabled = false;
+      } else {
+        cmpPartnerId = null;
       }
 
       try {
@@ -920,6 +1022,21 @@
       } catch {
         showFeedback('importFeedback', '잘못된 코드', 'feedback-err');
       }
+    }
+
+    function shareCmpLink() {
+      const base = location.href.split('#')[0];
+      let url;
+      if (cmpPartnerId) {
+        url = base + '#cmp=' + cmpPartnerId;
+      } else if (isLoggedIn()) {
+        url = base + '#u=' + getAcctId();
+      } else {
+        url = base + '#c=' + encodeCollection();
+      }
+      navigator.clipboard.writeText(url)
+        .then(() => showFeedback('copyFeedback2', '비교 링크 복사됨! ✓', 'feedback-ok'))
+        .catch(() => showFeedback('copyFeedback2', '복사 실패', 'feedback-err'));
     }
 
     function exitCompare() {
@@ -1068,6 +1185,22 @@
       const hash = location.hash;
       if (hash.startsWith('#u=')) {
         enterProfileView(hash.slice(3));
+      } else if (hash.startsWith('#cmp=')) {
+        // Auto-enter compare mode with partner ID
+        const partnerId = hash.slice(5);
+        if (CLOUD_ID_RE.test(partnerId)) {
+          cmpPartnerId = partnerId;
+          showCollection(document.querySelector('.collection-tab'));
+          fetchCloudCode(partnerId).then(code => {
+            compareCards = decodeCollection(code);
+            compareFilter = 'all';
+            document.getElementById('compareBanner').style.display = 'flex';
+            document.getElementById('tradeSummary').style.display = 'flex';
+            updateCompareStats();
+            buildTradeSummary();
+            renderCards();
+          }).catch(() => { history.replaceState(null, '', location.pathname); });
+        }
       } else if (hash.startsWith('#c=')) {
         // Legacy code links — show as compare
         try {
@@ -1081,6 +1214,8 @@
           renderCards();
         } catch { history.replaceState(null, '', location.pathname); }
       }
+      // Hide browse-wishlist-section by default (only shown in browse mode)
+      document.getElementById('browse-wishlist-section').style.display = 'none';
     });
 
     // ── Print / PDF ─────────────────────────────────────────
@@ -1279,10 +1414,12 @@
     }
 
     function showSummary() {
+      if (viewMode === 'summary') { showCollectionCards(); return; }
       viewMode = 'summary';
       hideCompareUI();
       clearActive('.top-left button');
       document.querySelector('.collection-tab').classList.add('active');
+      document.querySelector('.summary-tab-btn').classList.add('active');
       overview.style.display  = 'none';
       grid.style.display      = 'none';
       sidebar.style.display   = 'none';
@@ -1295,12 +1432,14 @@
 
     function showCollectionCards() {
       viewMode = 'collection';
+      document.querySelector('.summary-tab-btn').classList.remove('active');
       document.getElementById('summaryView').style.display   = 'none';
       grid.style.display = 'grid';
       sidebar.style.display = '';
       sidebar.classList.remove('disabled');
       document.getElementById('collSeasonNav').style.display  = 'block';
       document.getElementById('collSearchWrap').style.display = '';
+      document.getElementById('browse-wishlist-section').style.display = 'none';
       setOwnershipVisibility(true);
       buildProgress();
       renderCards();
@@ -1423,8 +1562,9 @@
               ${missing.length > 0 ? `<div class="sv-meta-item sv-meta-miss"><strong>${missing.length}</strong><span class="sv-meta-sub">미보유</span></div>` : ''}
             </div>
             <div class="sv-hero-actions">
-              <button class="code-btn" onclick="printCollection()">🖨 PDF 출력</button>
-              <button class="code-btn" onclick="copyMissingList()">📋 미보유 목록 복사</button>
+              <button class="sv-link-btn" onclick="printCollection()">🖨 PDF 출력</button>
+              <button class="sv-link-btn" onclick="copyMissingList()">📋 미보유 목록 복사</button>
+              <button class="sv-link-btn" onclick="generateStatsImage()">🖼 이미지로 공유</button>
               <span id="svCopyFeedback" style="font-size:12px"></span>
             </div>
           </header>
@@ -1455,6 +1595,7 @@
 
     // ── Modal ───────────────────────────────────────────────
     function openModal(c) {
+      _currentModalSrc = c.src;
       document.getElementById('cardModal').style.display = 'flex';
       document.getElementById('modalImage').src = c.src;
       const rows = [
@@ -1466,10 +1607,162 @@
         .filter(([, v]) => v && v.trim())
         .map(([label, val]) => `<tr><th>${label}</th><td>${val}</td></tr>`)
         .join('');
+      // Likes section
+      const likeBtn = document.getElementById('likeBtn');
+      const liked = isRecentlyLiked(c.src);
+      likeBtn.className = 'like-btn' + (liked ? ' liked' : '');
+      document.getElementById('likeCount').textContent = '…';
+      fetchLikeCount(c.src);
     }
 
     function closeModal(e) {
-      if (e.target.id === 'cardModal') e.target.style.display = 'none';
+      if (e.target.id === 'cardModal') {
+        e.target.style.display = 'none';
+        _currentModalSrc = null;
+      }
+    }
+
+    // ── Likes system ─────────────────────────────────────────
+    function isRecentlyLiked(src) {
+      const ts = parseInt(localStorage.getItem('zc_liked_' + src) || '0', 10);
+      return Date.now() - ts < 5000;
+    }
+
+    async function fetchLikeCount(src) {
+      try {
+        const resp = await fetch('/api/likes?card=' + encodeURIComponent(src));
+        if (!resp.ok) return;
+        const { count } = await resp.json();
+        if (_currentModalSrc === src) {
+          document.getElementById('likeCount').textContent = count;
+        }
+      } catch {}
+    }
+
+    async function likeCard() {
+      const src = _currentModalSrc;
+      if (!src) return;
+      // Client-side rate limit: 5s
+      const ts = parseInt(localStorage.getItem('zc_liked_' + src) || '0', 10);
+      if (Date.now() - ts < 5000) return;
+      localStorage.setItem('zc_liked_' + src, String(Date.now()));
+
+      const btn = document.getElementById('likeBtn');
+      btn.classList.add('liked', 'bump');
+      btn.addEventListener('animationend', () => btn.classList.remove('bump'), { once: true });
+
+      try {
+        const resp = await fetch('/api/likes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ card: src }),
+        });
+        if (!resp.ok) return;
+        const { count } = await resp.json();
+        if (_currentModalSrc === src) {
+          document.getElementById('likeCount').textContent = count;
+        }
+      } catch {}
+    }
+
+    async function showLikesRanking() {
+      document.getElementById('likesRanking').style.display = 'flex';
+      document.getElementById('likesRankList').innerHTML = '<p style="color:#aaa;text-align:center">불러오는 중…</p>';
+      try {
+        const resp = await fetch('/api/likes?top=10');
+        if (!resp.ok) throw new Error();
+        const list = await resp.json();
+        if (!list.length) {
+          document.getElementById('likesRankList').innerHTML = '<p style="color:#aaa;text-align:center">아직 좋아요가 없습니다</p>';
+          return;
+        }
+        const medals = ['gold','silver','bronze'];
+        document.getElementById('likesRankList').innerHTML = list.map((item, i) => {
+          const card = CARDS.find(c => c.src === item.src);
+          const name = card ? card.name : item.src;
+          const numCls = medals[i] || '';
+          return `<div class="likes-rank-row">
+            <span class="likes-rank-num ${numCls}">${i+1}</span>
+            <img class="likes-rank-img" src="${item.src}" alt="${name}">
+            <span class="likes-rank-name">${name}</span>
+            <span class="likes-rank-count">❤️ ${item.count}</span>
+          </div>`;
+        }).join('');
+      } catch {
+        document.getElementById('likesRankList').innerHTML = '<p style="color:#c62828;text-align:center">불러오기 실패</p>';
+      }
+    }
+
+    // ── Canvas stats image ────────────────────────────────────
+    function generateStatsImage() {
+      const W = 900, H = 500;
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Background gradient
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, '#1a1a2e');
+      grad.addColorStop(1, '#263248');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Title
+      ctx.fillStyle = '#e0e0ff';
+      ctx.font = 'bold 32px sans-serif';
+      ctx.fillText('ZUTOMAYO CARD 컬렉션', 48, 60);
+
+      // Date
+      const date = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.font = '16px sans-serif';
+      ctx.fillText(date, 48, 90);
+
+      // Total stat
+      const totalCards  = CARDS.length;
+      const ownedUnique = CARDS.filter(c => isOwned(c.src)).length;
+      const pct = Math.round(ownedUnique / totalCards * 100);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 80px sans-serif';
+      ctx.fillText(ownedUnique, 48, 190);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = 'bold 36px sans-serif';
+      ctx.fillText(' / ' + totalCards, 48 + ctx.measureText(String(ownedUnique)).width + 4, 190);
+      ctx.fillStyle = '#69f0ae';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText(pct + '%', 48, 220);
+
+      // Season bars
+      const SEASON_COLORS = ['#42a5f5','#66bb6a','#ffa726','#ab47bc'];
+      const barX = 48, barW = W - 96, barH = 22, barGap = 44;
+      const startY = 280;
+      ['1','2','3','4'].forEach((s, i) => {
+        const sc  = CARDS.filter(c => c.season === s);
+        const own = sc.filter(c => isOwned(c.src)).length;
+        const p   = sc.length ? own / sc.length : 0;
+        const y   = startY + i * barGap;
+
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText('시즌' + s, barX, y + 15);
+
+        const lx = barX + 54;
+        const bw = barW - 160;
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.beginPath(); ctx.roundRect(lx, y, bw, barH, 4); ctx.fill();
+        ctx.fillStyle = SEASON_COLORS[i];
+        ctx.beginPath(); ctx.roundRect(lx, y, Math.max(bw * p, 4), barH, 4); ctx.fill();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '13px sans-serif';
+        ctx.fillText(`${own} / ${sc.length}  (${Math.round(p*100)}%)`, lx + bw + 12, y + 15);
+      });
+
+      // Download
+      const a = document.createElement('a');
+      a.download = 'zutomayo-card-collection.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
     }
 
   </script>
