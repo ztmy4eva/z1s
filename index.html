@@ -22,10 +22,10 @@
 
   <!-- Collection sub-bar (progress + account, shown only in collection mode) -->
   <div id="collTopBar" class="coll-sub-bar" style="display:none">
-    <!-- Left: progress + search -->
+    <!-- Left: view toggle + progress + search -->
     <div class="coll-left">
       <div class="collection-progress" id="collectionProgress"></div>
-      <div class="coll-search-wrap">
+      <div class="coll-search-wrap" id="collSearchWrap">
         <input id="cardSearch" type="search" placeholder="카드 이름 검색…" autocomplete="off" oninput="renderCards()" />
       </div>
     </div>
@@ -38,6 +38,7 @@
         <button class="code-btn cloud-btn" onclick="showAcctPanel('create')">계정 만들기</button>
         <button class="code-btn" onclick="showAcctPanel('login')">로그인</button>
         <span id="copyFeedback"></span>
+        <button class="acct-icon-btn" id="summaryBtnLoggedOut" onclick="showSummary()" title="요약">📋</button>
       </div>
 
       <!-- Logged-in -->
@@ -50,6 +51,7 @@
         <span id="copyFeedback2" class="acct-copy-feedback"></span>
         <button class="code-btn compare-btn" onclick="toggleCompareInput()">비교 / 교환</button>
         <div class="acct-icon-group">
+          <button class="acct-icon-btn" id="summaryBtnLoggedIn" onclick="showSummary()" title="요약">📋</button>
           <button class="acct-icon-btn" onclick="shareLink()" title="링크 복사">🔗</button>
           <button class="acct-icon-btn" onclick="printCollection()" title="PDF 출력">🖨</button>
           <button class="acct-icon-btn" onclick="showAcctPanel('settings')" title="설정">⚙</button>
@@ -107,7 +109,6 @@
           <input id="codeInput" type="text" spellcheck="false" placeholder="ID 또는 컬렉션 코드" />
           <div class="acct-actions">
             <button class="code-btn apply-btn" onclick="startCompare()">비교</button>
-            <button class="code-btn" onclick="importCode()">가져오기 (덮어쓰기)</button>
             <button class="code-btn" onclick="hideCompareInput()">취소</button>
           </div>
           <span id="importFeedback" class="acct-error"></span>
@@ -156,12 +157,8 @@
     <aside class="sidebar disabled" id="sidebar">
       <!-- Collection season picker (collection mode only, at top) -->
       <div id="collSeasonNav" style="display:none">
-        <h3>보기</h3>
-        <button class="coll-season-btn active" id="collViewCards" onclick="showCollectionCards(this)">카드</button>
-        <button class="coll-season-btn" id="collViewSummary" onclick="showSummary(this)">요약</button>
-        <hr />
         <h3>시즌</h3>
-        <button class="coll-season-btn" onclick="setCollectionSeason('1', this)">시즌1</button>
+        <button class="coll-season-btn active" onclick="setCollectionSeason('1', this)">시즌1</button>
         <button class="coll-season-btn" onclick="setCollectionSeason('2', this)">시즌2</button>
         <button class="coll-season-btn" onclick="setCollectionSeason('3', this)">시즌3</button>
         <button class="coll-season-btn" onclick="setCollectionSeason('4', this)">시즌4</button>
@@ -192,12 +189,10 @@
           <img src="cards/zc123.png" class="overview-image">
         </div>
         <main class="card-grid" id="cardGrid"></main>
+        <div id="summaryView" style="display:none"></div>
       </div>
 
   </div>
-
-  <!-- Summary view -->
-  <div id="summaryView" style="display:none"></div>
 
   <!-- 모달 -->
   <div id="cardModal" class="modal" onclick="closeModal(event)">
@@ -494,12 +489,8 @@
       document.getElementById('collTopBar').style.display    = 'flex';
       document.getElementById('collSeasonNav').style.display = 'block';
       clearActive('.coll-season-btn');
-      document.getElementById('collViewCards').classList.add('active');
-      // activate first season button (시즌1, 3rd .coll-season-btn after the two view buttons)
-      const seasonBtns = document.querySelectorAll('.coll-season-btn');
-      seasonBtns.forEach(b => b.classList.remove('active'));
-      document.getElementById('collViewCards').classList.add('active');
-      seasonBtns[2].classList.add('active'); // 시즌1 is index 2 (after 카드, 요약)
+      document.querySelector('.coll-season-btn').classList.add('active'); // 시즌1
+      document.getElementById('collSearchWrap').style.display = '';
       collSeason = '1';
       setOwnershipVisibility(true);
       buildProgress();
@@ -509,15 +500,7 @@
     function setCollectionSeason(s, btn) {
       collSeason = s;
       clearActive('.coll-season-btn');
-      document.getElementById('collViewCards').classList.add('active');
       btn.classList.add('active');
-      // if currently in summary, switch back to card view
-      if (viewMode === 'summary') {
-        viewMode = 'collection';
-        document.getElementById('summaryView').style.display = 'none';
-        grid.style.display = 'grid';
-        setOwnershipVisibility(true);
-      }
       renderCards();
     }
 
@@ -1006,20 +989,20 @@
 
       const matchSection = document.getElementById('tradeMatchSection');
       const matchEl = document.getElementById('tradeMatches');
+      const TRADEABLE = new Set(['UR', 'SR']);
       if (need.length > 0 && offer.length > 0) {
         const matches = [];
         const usedNeed = new Set(), usedOffer = new Set();
-        for (const pass of ['same', 'cross']) {
-          for (let ni = 0; ni < need.length && matches.length < 10; ni++) {
-            if (usedNeed.has(ni)) continue;
-            for (let oi = 0; oi < offer.length && matches.length < 10; oi++) {
-              if (usedOffer.has(oi)) continue;
-              if (pass === 'same' && need[ni].card.rarity !== offer[oi].card.rarity) continue;
-              matches.push({ get: need[ni].card, give: offer[oi].card });
-              usedNeed.add(ni);
-              usedOffer.add(oi);
-              break;
-            }
+        for (let ni = 0; ni < need.length && matches.length < 10; ni++) {
+          if (usedNeed.has(ni)) continue;
+          if (!TRADEABLE.has(need[ni].card.rarity)) continue;
+          for (let oi = 0; oi < offer.length && matches.length < 10; oi++) {
+            if (usedOffer.has(oi)) continue;
+            if (need[ni].card.rarity !== offer[oi].card.rarity) continue;
+            matches.push({ get: need[ni].card, give: offer[oi].card });
+            usedNeed.add(ni);
+            usedOffer.add(oi);
+            break;
           }
         }
         if (matches.length > 0) {
@@ -1264,35 +1247,34 @@
 
     // ── Summary view ────────────────────────────────────────
     function cardNum(src) {
-      const m = src.match(/_(\d+)\.png$/);
+      const m = src.match(/_(\d+)\.(png|jpg)$/i);
       return m ? parseInt(m[1], 10) : 0;
     }
 
-    function showSummary(btn) {
+    function showSummary() {
       viewMode = 'summary';
       hideCompareUI();
       clearActive('.top-left button');
       document.querySelector('.collection-tab').classList.add('active');
-      overview.style.display = 'none';
-      grid.style.display     = 'none';
-      sidebar.style.display  = '';
-      document.getElementById('collTopBar').style.display    = 'flex';
-      document.getElementById('collSeasonNav').style.display = 'block';
+      overview.style.display  = 'none';
+      grid.style.display      = 'none';
+      sidebar.style.display   = 'none';
+      document.getElementById('collTopBar').style.display     = 'flex';
+      document.getElementById('collSeasonNav').style.display  = 'none';
+      document.getElementById('collSearchWrap').style.display = 'none';
       setOwnershipVisibility(false);
-      // toggle view buttons
-      document.getElementById('collViewCards').classList.remove('active');
-      document.getElementById('collViewSummary').classList.add('active');
       renderSummary();
     }
 
-    function showCollectionCards(btn) {
-      // Switch from summary back to card grid without re-entering collection mode fully
+    function showCollectionCards() {
       viewMode = 'collection';
-      document.getElementById('summaryView').style.display = 'none';
+      document.getElementById('summaryView').style.display   = 'none';
       grid.style.display = 'grid';
+      sidebar.style.display = '';
+      sidebar.classList.remove('disabled');
+      document.getElementById('collSeasonNav').style.display  = 'block';
+      document.getElementById('collSearchWrap').style.display = '';
       setOwnershipVisibility(true);
-      document.getElementById('collViewSummary').classList.remove('active');
-      document.getElementById('collViewCards').classList.add('active');
       buildProgress();
       renderCards();
     }
@@ -1404,20 +1386,24 @@
 
       el.innerHTML = `
         <div class="sv-wrap">
+          <div class="sv-back-row">
+            <button class="sv-back-btn" onclick="showCollectionCards()">← 카드로 돌아가기</button>
+          </div>
 
           <header class="sv-header">
-            <div class="sv-hero">
-              <span class="sv-hero-num">${ownedUnique}<span class="sv-hero-den"> / ${totalCards}</span></span>
-              <span class="sv-hero-label">보유 카드</span>
-            </div>
-            <div class="sv-hero-bar-wrap">
-              <div class="sv-hero-bar" style="width:${pct}%"></div>
+            <div class="sv-hero-main">
+              <div class="sv-hero">
+                <span class="sv-hero-num">${ownedUnique}<span class="sv-hero-den"> / ${totalCards}</span></span>
+                <span class="sv-hero-label">보유 카드</span>
+              </div>
+              <div class="sv-hero-bar-wrap">
+                <div class="sv-hero-bar" style="width:${pct}%"></div>
+              </div>
             </div>
             <div class="sv-meta">
-              <span class="sv-meta-item"><strong>${pct}%</strong> 완성</span>
-              <span class="sv-meta-sep">·</span>
-              <span class="sv-meta-item">총 <strong>${totalCopies}</strong>장 보유</span>
-              ${duplicates > 0 ? `<span class="sv-meta-sep">·</span><span class="sv-meta-item sv-meta-dup"><strong>${duplicates}</strong>장 여분</span>` : ''}
+              <div class="sv-meta-item sv-meta-big"><strong>${pct}%</strong><span class="sv-meta-sub">완성</span></div>
+              <div class="sv-meta-item"><strong>${totalCopies}</strong><span class="sv-meta-sub">총 보유</span></div>
+              ${duplicates > 0 ? `<div class="sv-meta-item sv-meta-dup"><strong>${duplicates}</strong><span class="sv-meta-sub">여분</span></div>` : ''}
             </div>
           </header>
 

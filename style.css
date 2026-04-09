@@ -59,11 +59,25 @@ body {
 .coll-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   flex: 1;
   min-width: 0;
 }
+
+/* ── Summary back button ─────────────────────────────────── */
+.sv-back-row {
+  margin-bottom: 12px;
+}
+.sv-back-btn {
+  background: none;
+  border: none;
+  color: #1565c0;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+.sv-back-btn:hover { text-decoration: underline; }
 
 .coll-search-wrap {
   flex: 1;
@@ -551,19 +565,28 @@ button.active {
 
 /* ── Summary view wrapper ───────────────────────────────── */
 .sv-wrap {
-  max-width: 900px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 28px 24px 60px;
+  padding: 20px 24px 60px;
   font-family: 'Hiragino Sans', 'Noto Sans KR', sans-serif;
 }
 
 /* ── Hero stats ─────────────────────────────────────────── */
 .sv-header {
-  margin-bottom: 36px;
-  padding: 24px 28px;
+  margin-bottom: 24px;
+  padding: 20px 24px;
   background: #1a1a2e;
-  border-radius: 14px;
+  border-radius: 12px;
   color: #e0e0ff;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.sv-hero-main {
+  flex: 1;
+  min-width: 160px;
 }
 
 .sv-hero {
@@ -605,18 +628,32 @@ button.active {
 
 .sv-meta {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: rgba(255,255,255,0.6);
+  gap: 16px;
+  align-items: flex-start;
+  flex-shrink: 0;
 }
-.sv-meta-sep { opacity: 0.4; }
-.sv-meta-item strong { color: #e0e0ff; }
-.sv-meta-dup strong  { color: #ffab40; }
+.sv-meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.sv-meta-item strong {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff;
+}
+.sv-meta-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  white-space: nowrap;
+}
+.sv-meta-dup strong { color: #ffab40; }
 
 /* ── Sections ───────────────────────────────────────────── */
 .sv-section {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
 }
 .sv-section-title {
   font-size: 13px;
@@ -1244,8 +1281,8 @@ button.active {
   .top-left button,
   .top-right button,
   .buy-btn {
-    padding: 9px 13px;
-    font-size: 14px;
+    padding: 7px 11px;
+    font-size: 13px;
   }
 
   .container {
@@ -1343,16 +1380,61 @@ button.active {
 
 /* ── Phone (≤480px) ──────────────────────────────────────── */
 @media (max-width: 480px) {
+  /* ── Nav: single scrollable row, no wrap ── */
   .top-bar {
-    padding: 8px 12px;
-    gap: 8px;
+    padding: 6px 10px;
+    gap: 4px;
   }
+
+  .top-left {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 4px;
+    padding-bottom: 2px;
+  }
+  .top-left::-webkit-scrollbar { display: none; }
 
   .top-left button,
   .top-right button,
   .buy-btn {
-    padding: 8px 10px;
-    font-size: 13px;
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Sidebar filters: compact pill row ── */
+  .sidebar {
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .sidebar button,
+  .sidebar .rarity-btn,
+  .sidebar .type-btn,
+  .sidebar .ownership-btn,
+  .sidebar .coll-season-btn {
+    padding: 5px 10px !important;
+    font-size: 12px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .sidebar h3 {
+    width: 100%;
+    margin: 6px 0 2px;
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sidebar hr {
+    width: 100%;
+    margin: 4px 0;
+    border: none;
+    border-top: 1px solid #eee;
   }
 
   .coll-sub-bar {
