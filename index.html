@@ -1603,6 +1603,7 @@
         .map(([label, val]) => `<tr><th>${label}</th><td>${val}</td></tr>`)
         .join('');
       // Likes section
+      _likeCount = 0;
       document.getElementById('likeBtn').className = 'like-btn';
       document.getElementById('likeCount').textContent = '…';
       fetchLikeCount(c.src);
@@ -1616,15 +1617,20 @@
     }
 
     // ── Likes system ─────────────────────────────────────────
-    let _liking = false; // prevent concurrent requests
+    let _liking      = false;
+    let _likeCount   = 0;     // authoritative count for the open modal
 
     async function fetchLikeCount(src) {
       try {
         const resp = await fetch('/api/likes?card=' + encodeURIComponent(src));
         if (!resp.ok) return;
         const { count } = await resp.json();
-        if (_currentModalSrc === src)
+        // Only apply if this card is still open AND we haven't already liked it
+        // (don't let the initial fetch overwrite an optimistic increment)
+        if (_currentModalSrc === src && !_liking) {
+          _likeCount = count;
           document.getElementById('likeCount').textContent = count;
+        }
       } catch {}
     }
 
@@ -1639,16 +1645,15 @@
       if (Date.now() - ts < 3000) return;
       localStorage.setItem(lsKey, String(Date.now()));
 
-      // Optimistic UI — update count immediately
-      const countEl = document.getElementById('likeCount');
-      const current = parseInt(countEl.textContent, 10) || 0;
-      countEl.textContent = current + 1;
+      // Optimistic UI — increment immediately from known count
+      _liking = true;
+      _likeCount += 1;
+      document.getElementById('likeCount').textContent = _likeCount;
 
       const btn = document.getElementById('likeBtn');
       btn.classList.add('liked', 'bump');
       btn.addEventListener('animationend', () => btn.classList.remove('bump'), { once: true });
 
-      _liking = true;
       try {
         const resp = await fetch('/api/likes', {
           method: 'POST',
@@ -1657,9 +1662,10 @@
         });
         if (resp.ok) {
           const { count } = await resp.json();
-          // Sync with server's actual count (in case of concurrent likes)
-          if (_currentModalSrc === src)
-            countEl.textContent = count;
+          if (_currentModalSrc === src) {
+            _likeCount = count;
+            document.getElementById('likeCount').textContent = count;
+          }
         }
       } catch {} finally {
         _liking = false;
