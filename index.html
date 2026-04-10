@@ -172,12 +172,6 @@
         <button class="ownership-btn" id="own-btn-wishlist" onclick="filterOwnership('wishlist', this)">⭐ 위시리스트</button>
         <hr />
       </div>
-      <!-- Wishlist filter (browse mode) -->
-      <div id="browse-wishlist-section">
-        <h3>위시리스트</h3>
-        <button class="ownership-btn" id="own-btn-wish-browse" onclick="filterWishlistBrowse(this)">⭐ 위시리스트만</button>
-        <hr />
-      </div>
       <h3>카드 종류</h3>
       <button class="type-btn" onclick="filterType('character', this)">캐릭터 카드</button>
       <button class="type-btn" onclick="filterType('enchant', this)">인챈트 카드</button>
@@ -274,6 +268,7 @@
 
     // ── Hover preview ────────────────────────────────────────
     function showHoverPreview(c, el) {
+      if (window.innerWidth <= 768) return;
       const hp = document.getElementById('hoverPreview');
       hp.innerHTML = `<img src="${c.src}" alt="${c.name}">`;
       hp.classList.add('visible');
@@ -437,6 +432,19 @@
               updateProgress();
             }
           };
+
+          // ⭐ wishlist star button on collection cards
+          const starBtn = document.createElement('button');
+          starBtn.className = 'wish-star-btn' + (isWished(c.src) ? ' wished' : '');
+          starBtn.textContent = '⭐';
+          starBtn.title = isWished(c.src) ? '위시리스트에서 제거' : '위시리스트에 추가';
+          starBtn.onclick = e => {
+            e.stopPropagation();
+            if (isWished(c.src)) { wishlist.delete(c.src); } else { wishlist.add(c.src); }
+            saveWishlist();
+            starBtn.classList.toggle('wished');
+          };
+          wrap.appendChild(starBtn);
         } else {
           // Browse mode: click to open modal, right-click to wishlist
           wrap.onclick = () => openModal(c);
@@ -537,7 +545,6 @@
       sidebar.classList.add('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
-      document.getElementById('browse-wishlist-section').style.display = 'none';
       setOwnershipVisibility(false);
       currentSeason = currentRarity = currentType = currentOwnership = 'all';
     }
@@ -554,7 +561,6 @@
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'none';
       document.getElementById('collSeasonNav').style.display = 'none';
-      document.getElementById('browse-wishlist-section').style.display = '';
       setOwnershipVisibility(false);
       currentSeason = season;
       renderCards();
@@ -575,7 +581,6 @@
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'flex';
       document.getElementById('collSeasonNav').style.display = 'block';
-      document.getElementById('browse-wishlist-section').style.display = 'none';
       clearActive('.coll-season-btn');
       document.querySelector('.coll-season-btn').classList.add('active'); // 시즌1
       document.getElementById('collSearchWrap').style.display = '';
@@ -613,17 +618,6 @@
       renderCards();
     }
 
-    function filterWishlistBrowse(btn) {
-      if (btn.classList.contains('active')) {
-        btn.classList.remove('active');
-        currentOwnership = 'all';
-      } else {
-        clearActive('.sidebar .ownership-btn');
-        btn.classList.add('active');
-        currentOwnership = 'wishlist';
-      }
-      renderCards();
-    }
 
     // ── Encode / decode ─────────────────────────────────────
     // Format: 'i' + base64(2 bytes × index) when sparse (<27 owned)
@@ -1216,8 +1210,6 @@
           renderCards();
         } catch { history.replaceState(null, '', location.pathname); }
       }
-      // Hide browse-wishlist-section by default (only shown in browse mode)
-      document.getElementById('browse-wishlist-section').style.display = 'none';
     });
 
     // ── Print / PDF ─────────────────────────────────────────
@@ -1441,7 +1433,6 @@
       sidebar.classList.remove('disabled');
       document.getElementById('collSeasonNav').style.display  = 'block';
       document.getElementById('collSearchWrap').style.display = '';
-      document.getElementById('browse-wishlist-section').style.display = 'none';
       setOwnershipVisibility(true);
       buildProgress();
       renderCards();

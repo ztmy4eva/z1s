@@ -1460,6 +1460,10 @@ button.active {
     gap: 4px;
   }
 
+  .top-bar {
+    overflow-x: hidden;
+  }
+
   .top-left {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -1467,6 +1471,8 @@ button.active {
     scrollbar-width: none;
     gap: 4px;
     padding-bottom: 2px;
+    width: 100%;
+    min-width: 0;
   }
   .top-left::-webkit-scrollbar { display: none; }
 
@@ -1641,7 +1647,7 @@ button.active {
   display: block;
 }
 
-/* ── Wishlist star badge ─────────────────────────────────── */
+/* ── Wishlist star badge (browse read-only) ─────────────── */
 .wish-badge {
   position: absolute;
   top: 5px;
@@ -1651,6 +1657,29 @@ button.active {
   pointer-events: none;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
+
+/* ── Wishlist star button (collection mode) ─────────────── */
+.wish-star-btn {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+  padding: 0;
+}
+.card-wrap:hover .wish-star-btn { opacity: 1; }
+.wish-star-btn.wished { opacity: 1; background: rgba(0,0,0,0.5); }
 
 /* ── Modal like section ──────────────────────────────────── */
 .modal-like-section {
