@@ -1454,35 +1454,30 @@ button.active {
 
 /* ── Phone (≤480px) ──────────────────────────────────────── */
 @media (max-width: 480px) {
-  /* ── Nav: single scrollable row, no wrap ── */
+  /* ── Nav: 7-column grid, all buttons visible at once ── */
   .top-bar {
-    padding: 6px 10px;
-    gap: 4px;
-  }
-
-  .top-bar {
-    overflow-x: hidden;
+    padding: 4px 6px;
+    gap: 0;
   }
 
   .top-left {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    gap: 4px;
-    padding-bottom: 2px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
     width: 100%;
-    min-width: 0;
+    flex-wrap: unset;
   }
-  .top-left::-webkit-scrollbar { display: none; }
 
   .top-left button,
   .top-right button,
   .buy-btn {
-    padding: 6px 10px;
-    font-size: 12px;
-    white-space: nowrap;
-    flex-shrink: 0;
+    padding: 5px 2px;
+    font-size: 11px;
+    white-space: normal;
+    word-break: keep-all;
+    text-align: center;
+    line-height: 1.2;
+    min-width: 0;
   }
 
   /* ── Sidebar filters: compact pill row ── */

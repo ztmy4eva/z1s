@@ -54,8 +54,8 @@ export async function onRequestPost({ request, env }) {
   const rl = await env.COLLECTIONS.get(rlKey);
   if (rl) return json({ count: parseInt(await env.COLLECTIONS.get('like:' + card) || '0', 10), limited: true });
 
-  // Set rate limit with 10s TTL
-  await env.COLLECTIONS.put(rlKey, '1', { expirationTtl: 10 });
+  // Set rate limit with 60s TTL (KV minimum is 60s)
+  await env.COLLECTIONS.put(rlKey, '1', { expirationTtl: 60 });
 
   // Increment like count
   const likeKey = 'like:' + card;
