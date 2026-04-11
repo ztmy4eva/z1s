@@ -597,10 +597,12 @@
       document.querySelectorAll(sel).forEach(b => b.classList.remove('active'));
     }
 
+    function clearPanelBtns() {
+      document.querySelectorAll('.summary-tab-btn, .deck-tab-btn').forEach(b => b.classList.remove('active'));
+    }
     function hideSummary() {
       document.getElementById('summaryView').style.display = 'none';
-      const btn = document.querySelector('.summary-tab-btn');
-      if (btn) btn.classList.remove('active');
+      clearPanelBtns();
     }
 
     function hideCompareUI() {
@@ -1502,6 +1504,7 @@
       hideCompareUI();
       clearActive('.top-left button');
       document.querySelector('.collection-tab').classList.add('active');
+      clearPanelBtns();
       document.querySelector('.summary-tab-btn').classList.add('active');
       overview.style.display  = 'none';
       grid.style.display      = 'none';
@@ -1515,10 +1518,9 @@
 
     function showCollectionCards() {
       viewMode = 'collection';
-      document.querySelector('.summary-tab-btn').classList.remove('active');
-      document.getElementById('summaryView').style.display   = 'none';
-      document.getElementById('deckView').style.display = 'none';
-      document.querySelector('.deck-tab-btn').classList.remove('active');
+      clearPanelBtns();
+      document.getElementById('summaryView').style.display = 'none';
+      document.getElementById('deckView').style.display    = 'none';
       grid.style.display = 'grid';
       sidebar.style.display = '';
       sidebar.classList.remove('disabled');
@@ -2097,8 +2099,7 @@
       document.querySelector('.collection-tab').classList.add('active');
       // show deck view
       document.getElementById('deckView').style.display = 'block';
-      document.querySelector('.summary-tab-btn').classList.remove('active');
-      // style deck button active
+      clearPanelBtns();
       document.querySelector('.deck-tab-btn').classList.add('active');
       loadDecks();
       showDeckList();
@@ -2421,18 +2422,23 @@
 
     // ── Mobile tab switch ─────────────────────────────────────
     function switchDeckMobileTab(tab) {
-      const pool = document.getElementById('dePool');
-      const panel = document.getElementById('dePanel');
+      const pool    = document.getElementById('dePool');
+      const panel   = document.getElementById('dePanel');
       const btnPool = document.getElementById('mobPool');
       const btnDeck = document.getElementById('mobDeck');
       if (!pool) return;
-      if (tab === 'pool') {
-        pool.style.display = ''; panel.style.display = 'none';
-        btnPool?.classList.add('active'); btnDeck?.classList.remove('active');
+      // Only hide/show on mobile — desktop shows both side by side
+      if (window.innerWidth <= 768) {
+        if (tab === 'pool') {
+          pool.style.display = ''; panel.style.display = 'none';
+        } else {
+          pool.style.display = 'none'; panel.style.display = '';
+        }
       } else {
-        pool.style.display = 'none'; panel.style.display = '';
-        btnDeck?.classList.add('active'); btnPool?.classList.remove('active');
+        pool.style.display = ''; panel.style.display = '';
       }
+      btnPool?.classList.toggle('active', tab === 'pool');
+      btnDeck?.classList.toggle('active', tab === 'deck');
     }
 
     // Init on load
