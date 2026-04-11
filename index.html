@@ -28,6 +28,7 @@
     <div class="coll-left">
       <div class="collection-progress" id="collectionProgress"></div>
       <button class="summary-tab-btn" onclick="showSummary()">📋 요약</button>
+      <button class="summary-tab-btn deck-tab-btn" onclick="showDeckView()">🃏 덱 빌더</button>
       <div class="coll-search-wrap" id="collSearchWrap">
         <input id="cardSearch" type="search" placeholder="카드 이름 검색…" autocomplete="off" oninput="renderCards()" />
       </div>
@@ -196,6 +197,86 @@
         </div>
         <main class="card-grid" id="cardGrid"></main>
         <div id="summaryView" style="display:none"></div>
+        <div id="deckView" style="display:none" class="deck-view-wrap">
+          <!-- Screen 1: Deck list -->
+          <div id="deckListScreen" class="dl-screen">
+            <div class="dl-header">
+              <div>
+                <h2 class="dl-title">내 덱</h2>
+                <p class="dl-subtitle">덱을 선택하거나 새로 만드세요</p>
+              </div>
+              <button class="dl-new-btn" onclick="newDeck()">+ 새 덱 만들기</button>
+            </div>
+            <div id="deckListGrid" class="dl-grid"></div>
+            <div id="deckListEmpty" class="dl-empty" style="display:none">
+              <p>저장된 덱이 없습니다</p>
+              <button class="dl-new-btn" onclick="newDeck()">첫 번째 덱 만들기</button>
+            </div>
+          </div>
+
+          <!-- Screen 2: Deck editor -->
+          <div id="deckEditorScreen" style="display:none" class="de-wrap">
+            <!-- Top toolbar -->
+            <div class="de-toolbar">
+              <button class="de-back-btn" onclick="confirmLeaveDeck()">←</button>
+              <input id="deckNameInput" class="de-name-input" type="text" maxlength="30" placeholder="덱 이름을 입력하세요" />
+              <div class="de-counter-wrap">
+                <span id="deckCounter" class="de-counter">0</span>
+                <span class="de-counter-max"> / 20</span>
+              </div>
+              <button class="de-save-btn" id="deckSaveBtn" onclick="saveDeck()">저장</button>
+            </div>
+            <!-- Progress bar -->
+            <div class="de-progress-track">
+              <div class="de-progress-fill" id="deckProgressFill"></div>
+              <div class="de-progress-fill de-progress-warn" id="deckProgressWarn" style="width:0"></div>
+            </div>
+
+            <!-- Editor body -->
+            <div class="de-body" id="deBody">
+              <!-- Left: card pool -->
+              <div class="de-pool" id="dePool">
+                <div class="de-pool-filters">
+                  <div class="de-season-tabs" id="deckSeasonTabs">
+                    <button class="de-stab active" data-season="all" onclick="setDeckSeason('all',this)">전체</button>
+                    <button class="de-stab" data-season="1" onclick="setDeckSeason('1',this)">S1</button>
+                    <button class="de-stab" data-season="2" onclick="setDeckSeason('2',this)">S2</button>
+                    <button class="de-stab" data-season="3" onclick="setDeckSeason('3',this)">S3</button>
+                    <button class="de-stab" data-season="4" onclick="setDeckSeason('4',this)">S4</button>
+                  </div>
+                  <div class="de-rarity-row">
+                    <button class="de-rf active" onclick="setDeckRarity('all',this)">전체</button>
+                    <button class="de-rf" onclick="setDeckRarity('UR',this)">UR</button>
+                    <button class="de-rf" onclick="setDeckRarity('SR',this)">SR</button>
+                    <button class="de-rf" onclick="setDeckRarity('R',this)">R</button>
+                    <button class="de-rf" onclick="setDeckRarity('N',this)">N</button>
+                    <button class="de-rf" onclick="setDeckRarity('SE',this)">SE</button>
+                    <input id="deckSearch" type="search" class="de-search" placeholder="카드 검색…" oninput="renderDeckPool()">
+                  </div>
+                </div>
+                <div id="deckPoolGrid" class="de-pool-grid"></div>
+              </div>
+
+              <!-- Right: deck panel -->
+              <div class="de-panel" id="dePanel">
+                <div class="de-panel-top">
+                  <div id="deckRarityDist" class="de-rarity-dist"></div>
+                </div>
+                <div id="deckCardList" class="de-card-list"></div>
+                <div class="de-panel-footer">
+                  <button class="de-clear-btn" onclick="clearDeck()">전체 삭제</button>
+                  <span id="deckSaveFeedback" class="de-save-feedback"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile bottom tab bar -->
+            <div class="de-mob-bar">
+              <button class="de-mob-btn active" id="mobPool" onclick="switchDeckMobileTab('pool')">🃏 카드 선택</button>
+              <button class="de-mob-btn" id="mobDeck" onclick="switchDeckMobileTab('deck')">📋 덱 <span id="mobDeckCount" class="de-mob-count">0</span></button>
+            </div>
+          </div>
+        </div>
       </div>
 
   </div>
@@ -584,6 +665,8 @@
       sidebar.classList.remove('disabled');
       document.getElementById('collTopBar').style.display    = 'flex';
       document.getElementById('collSeasonNav').style.display = 'block';
+      document.getElementById('deckView').style.display = 'none';
+      if (document.querySelector('.deck-tab-btn')) document.querySelector('.deck-tab-btn').classList.remove('active');
       clearActive('.coll-season-btn');
       document.querySelector('.coll-season-btn').classList.add('active'); // 시즌1
       document.getElementById('collSearchWrap').style.display = '';
@@ -1431,6 +1514,8 @@
       viewMode = 'collection';
       document.querySelector('.summary-tab-btn').classList.remove('active');
       document.getElementById('summaryView').style.display   = 'none';
+      document.getElementById('deckView').style.display = 'none';
+      document.querySelector('.deck-tab-btn').classList.remove('active');
       grid.style.display = 'grid';
       sidebar.style.display = '';
       sidebar.classList.remove('disabled');
@@ -1970,6 +2055,353 @@
       a.click();
     }
 
+    // ════════════════════════════════════════════════════════
+    // DECK BUILDER
+    // ════════════════════════════════════════════════════════
+
+    const DECK_RC = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#555', SE:'#ad1457', SEC:'#ad1457' };
+    let decks        = [];
+    let currentDeckId  = null;
+    let currentDeckMap = new Map(); // src → count (1 or 2)
+    let deckUnsaved    = false;
+    let deckPoolSeason = 'all';
+    let deckPoolRarity = 'all';
+
+    function loadDecks() {
+      try { decks = JSON.parse(localStorage.getItem('zc_decks') || '[]'); } catch { decks = []; }
+    }
+    function saveDecksStorage() {
+      localStorage.setItem('zc_decks', JSON.stringify(decks));
+    }
+
+    function deckTotal() {
+      let n = 0; currentDeckMap.forEach(v => n += v); return n;
+    }
+
+    // ── View control ─────────────────────────────────────────
+    function showDeckView() {
+      if (viewMode === 'deck') { showCollectionCards(); return; }
+      viewMode = 'deck';
+      // hide other views
+      overview.style.display  = 'none';
+      grid.style.display      = 'none';
+      sidebar.style.display   = 'none';
+      document.getElementById('summaryView').style.display   = 'none';
+      document.getElementById('collSeasonNav').style.display = 'none';
+      document.getElementById('collSearchWrap').style.display= 'none';
+      document.getElementById('collTopBar').style.display    = 'flex';
+      clearActive('.top-left button');
+      document.querySelector('.collection-tab').classList.add('active');
+      // show deck view
+      document.getElementById('deckView').style.display = 'block';
+      document.querySelector('.summary-tab-btn').classList.remove('active');
+      // style deck button active
+      document.querySelector('.deck-tab-btn').classList.add('active');
+      loadDecks();
+      showDeckList();
+    }
+
+    function hideDeckView() {
+      document.getElementById('deckView').style.display = 'none';
+      document.querySelector('.deck-tab-btn').classList.remove('active');
+    }
+
+    function showDeckList() {
+      document.getElementById('deckListScreen').style.display = '';
+      document.getElementById('deckEditorScreen').style.display = 'none';
+      renderDeckList();
+    }
+
+    function openDeckEditor(id) {
+      currentDeckId = id;
+      const deck = id ? decks.find(d => d.id === id) : null;
+      currentDeckMap = deck ? new Map(Object.entries(deck.cards).map(([k,v]) => [k, Number(v)])) : new Map();
+      deckUnsaved = false;
+      document.getElementById('deckNameInput').value = deck ? deck.name : '새 덱';
+      document.getElementById('deckListScreen').style.display = 'none';
+      document.getElementById('deckEditorScreen').style.display = '';
+      // reset filters
+      deckPoolSeason = 'all'; deckPoolRarity = 'all';
+      document.querySelectorAll('.de-stab').forEach((b,i) => b.classList.toggle('active', i===0));
+      document.querySelectorAll('.de-rf').forEach((b,i) => b.classList.toggle('active', i===0));
+      document.getElementById('deckSearch').value = '';
+      // default mobile to pool tab
+      switchDeckMobileTab('pool');
+      renderDeckPool();
+      renderDeckPanel();
+      updateDeckCounter();
+    }
+
+    function newDeck() { openDeckEditor(null); }
+
+    function deleteDeck(id) {
+      if (!confirm('이 덱을 삭제하시겠습니까?')) return;
+      decks = decks.filter(d => d.id !== id);
+      saveDecksStorage();
+      renderDeckList();
+    }
+
+    function confirmLeaveDeck() {
+      if (deckUnsaved && deckTotal() > 0) {
+        if (!confirm('저장하지 않은 변경사항이 있습니다. 나가시겠습니까?')) return;
+      }
+      showDeckList();
+    }
+
+    // ── Render deck list ──────────────────────────────────────
+    function renderDeckList() {
+      const grid = document.getElementById('deckListGrid');
+      const empty = document.getElementById('deckListEmpty');
+      if (!decks.length) { grid.innerHTML = ''; empty.style.display = ''; return; }
+      empty.style.display = 'none';
+      grid.innerHTML = decks.map(deck => {
+        const cards = Object.entries(deck.cards);
+        const total = cards.reduce((s,[,v]) => s+Number(v), 0);
+        const unique = cards.length;
+        const pct   = Math.round(total / 20 * 100);
+        // rarity distribution
+        const dist = { UR:0, SR:0, R:0, N:0, SE:0 };
+        cards.forEach(([src, cnt]) => {
+          const c = CARDS.find(x => x.src === src);
+          if (c) { const r = c.rarity === 'SEC' ? 'SE' : c.rarity; dist[r] = (dist[r]||0) + Number(cnt); }
+        });
+        const distHtml = Object.entries(dist).filter(([,v])=>v>0).map(([r,v]) =>
+          `<span class="dl-dist-badge" style="color:${DECK_RC[r]}">${r}<b>${v}</b></span>`).join('');
+        const complete = total === 20 ? 'dl-card-complete' : '';
+        return `<div class="dl-card ${complete}" onclick="openDeckEditor('${deck.id}')">
+          <div class="dl-card-header">
+            <span class="dl-card-name">${deck.name}</span>
+            <button class="dl-delete-btn" onclick="event.stopPropagation();deleteDeck('${deck.id}')">🗑</button>
+          </div>
+          <div class="dl-card-count ${total===20?'dl-full':''}">${total} / 20</div>
+          <div class="dl-card-bar-wrap"><div class="dl-card-bar" style="width:${pct}%"></div></div>
+          <div class="dl-dist">${distHtml}</div>
+          <div class="dl-card-meta">${unique}종 · ${new Date(deck.updated||deck.created).toLocaleDateString('ko-KR')}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Pool rendering ────────────────────────────────────────
+    function setDeckSeason(s, btn) {
+      deckPoolSeason = s;
+      document.querySelectorAll('.de-stab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderDeckPool();
+    }
+    function setDeckRarity(r, btn) {
+      deckPoolRarity = r;
+      document.querySelectorAll('.de-rf').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderDeckPool();
+    }
+
+    function renderDeckPool() {
+      const poolGrid = document.getElementById('deckPoolGrid');
+      const search = (document.getElementById('deckSearch')?.value || '').trim().toLowerCase();
+      const cards  = CARDS.filter(c => {
+        if (deckPoolSeason !== 'all' && c.season !== deckPoolSeason) return false;
+        if (deckPoolRarity !== 'all' && c.rarity !== deckPoolRarity && !(deckPoolRarity==='SE'&&c.rarity==='SEC')) return false;
+        if (search && !c.name.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      const total = deckTotal();
+
+      poolGrid.innerHTML = cards.map(c => {
+        const inDeck = currentDeckMap.get(c.src) || 0;
+        const owned  = isOwned(c.src);
+        const atMax  = inDeck >= 2;
+        const full   = total >= 20 && inDeck === 0;
+        const col    = DECK_RC[c.rarity] || '#999';
+        let badge = '';
+        if (inDeck === 1) badge = `<div class="dp-badge dp-badge-1">1</div>`;
+        if (inDeck === 2) badge = `<div class="dp-badge dp-badge-2">2</div>`;
+        return `<div class="dp-card ${owned?'':'dp-unowned'} ${atMax?'dp-at-max':''} ${full?'dp-full-deck':''}"
+          onclick="addToDeckCard('${c.src}')"
+          title="${c.name} (${c.rarity})${!owned?' — 미보유':''}">
+          <div class="dp-img-wrap">
+            <img src="${c.src}" loading="lazy" alt="${c.name}">
+            ${badge}
+            ${!owned ? '<div class="dp-unowned-overlay"></div>' : ''}
+          </div>
+          <div class="dp-label" style="color:${col}">${c.rarity}</div>
+        </div>`;
+      }).join('') || `<p style="color:#bbb;padding:20px;grid-column:1/-1">카드가 없습니다</p>`;
+    }
+
+    function addToDeckCard(src) {
+      const current = currentDeckMap.get(src) || 0;
+      const total   = deckTotal();
+      if (current >= 2) {
+        // shake the card
+        const dpCards = document.querySelectorAll('.dp-card');
+        dpCards.forEach(el => { if (el.getAttribute('onclick')?.includes(src)) { el.classList.add('dp-shake'); setTimeout(()=>el.classList.remove('dp-shake'),500); }});
+        return;
+      }
+      if (total >= 20) {
+        showDeckToast('덱이 가득 찼습니다 (20/20)');
+        return;
+      }
+      currentDeckMap.set(src, current + 1);
+      deckUnsaved = true;
+      // update just this card's badge for speed (don't full re-render)
+      updatePoolCard(src);
+      renderDeckPanel();
+      updateDeckCounter();
+    }
+
+    function updatePoolCard(src) {
+      // Fast update of just the badge without full re-render
+      const dpCards = document.querySelectorAll('.dp-card');
+      const inDeck = currentDeckMap.get(src) || 0;
+      const total  = deckTotal();
+      dpCards.forEach(el => {
+        const onclick = el.getAttribute('onclick') || '';
+        const elSrc = onclick.match(/addToDeckCard\('(.+?)'\)/)?.[1];
+        if (!elSrc) return;
+        // Update MAX state for all cards if deck just became full
+        if (total >= 20) el.classList.add('dp-full-deck');
+        else el.classList.remove('dp-full-deck');
+        if (elSrc !== src) return;
+        const wrap = el.querySelector('.dp-img-wrap');
+        const old = wrap.querySelector('.dp-badge');
+        if (old) old.remove();
+        if (inDeck === 1) { const b=document.createElement('div'); b.className='dp-badge dp-badge-1'; b.textContent='1'; wrap.appendChild(b); }
+        if (inDeck === 2) { const b=document.createElement('div'); b.className='dp-badge dp-badge-2'; b.textContent='2'; wrap.appendChild(b); el.classList.add('dp-at-max'); }
+      });
+    }
+
+    // ── Deck panel rendering ──────────────────────────────────
+    function renderDeckPanel() {
+      const list = document.getElementById('deckCardList');
+      if (!currentDeckMap.size) {
+        list.innerHTML = '<p class="de-panel-empty">카드를 선택하세요</p>';
+        document.getElementById('deckRarityDist').innerHTML = '';
+        return;
+      }
+
+      // Sort by rarity then card number
+      const RORDER = { UR:0, SR:1, R:2, N:3, SE:4, SEC:4 };
+      const entries = [...currentDeckMap.entries()]
+        .map(([src, cnt]) => ({ src, cnt, card: CARDS.find(c=>c.src===src) }))
+        .filter(x => x.card)
+        .sort((a,b) => (RORDER[a.card.rarity]??9)-(RORDER[b.card.rarity]??9) || cardNum(a.src)-cardNum(b.src));
+
+      list.innerHTML = entries.map(({src, cnt, card}) => {
+        const col   = DECK_RC[card.rarity] || '#999';
+        const n     = cardNum(src);
+        const id    = `S${card.season}-${String(n).padStart(3,'0')}`;
+        const owned = isOwned(src);
+        return `<div class="de-item ${owned?'':'de-item-unowned'}">
+          <img class="de-item-img" src="${src}" alt="${card.name}">
+          <div class="de-item-info">
+            <span class="de-item-name">${card.name}</span>
+            <span class="de-item-id" style="color:${col}">${card.rarity} · ${id}</span>
+          </div>
+          <div class="de-item-cnt ${cnt===2?'de-cnt-2':''}">${cnt===2?'×2':'×1'}</div>
+          <button class="de-item-minus" onclick="removeFromDeck('${src}')">−</button>
+        </div>`;
+      }).join('');
+
+      // Rarity distribution badges
+      const dist = {};
+      entries.forEach(({card, cnt}) => {
+        const r = card.rarity === 'SEC' ? 'SE' : card.rarity;
+        dist[r] = (dist[r]||0) + cnt;
+      });
+      document.getElementById('deckRarityDist').innerHTML =
+        Object.entries(dist).map(([r,v]) =>
+          `<span class="de-dist-chip" style="color:${DECK_RC[r]};border-color:${DECK_RC[r]}">${r} <b>${v}</b></span>`
+        ).join('');
+    }
+
+    function removeFromDeck(src) {
+      const current = currentDeckMap.get(src) || 0;
+      if (current <= 1) currentDeckMap.delete(src);
+      else currentDeckMap.set(src, current - 1);
+      deckUnsaved = true;
+      renderDeckPool();
+      renderDeckPanel();
+      updateDeckCounter();
+    }
+
+    function clearDeck() {
+      if (currentDeckMap.size && !confirm('덱을 전부 삭제하시겠습니까?')) return;
+      currentDeckMap.clear();
+      deckUnsaved = true;
+      renderDeckPool();
+      renderDeckPanel();
+      updateDeckCounter();
+    }
+
+    function updateDeckCounter() {
+      const total = deckTotal();
+      document.getElementById('deckCounter').textContent = total;
+      const fill  = document.getElementById('deckProgressFill');
+      const warn  = document.getElementById('deckProgressWarn');
+      const pct   = total / 20 * 100;
+      if (total === 20) {
+        fill.style.width = '100%'; fill.style.background = '#2e7d32'; warn.style.width = '0';
+      } else {
+        fill.style.width = pct + '%'; fill.style.background = ''; warn.style.width = '0';
+      }
+      // mobile count badge
+      const mobCount = document.getElementById('mobDeckCount');
+      if (mobCount) mobCount.textContent = total;
+    }
+
+    // ── Save ─────────────────────────────────────────────────
+    function saveDeck() {
+      const name   = document.getElementById('deckNameInput').value.trim() || '새 덱';
+      const cards  = Object.fromEntries(currentDeckMap);
+      const now    = Date.now();
+      if (currentDeckId) {
+        const d = decks.find(x => x.id === currentDeckId);
+        if (d) { d.name = name; d.cards = cards; d.updated = now; }
+        else { decks.push({ id: currentDeckId, name, cards, created: now, updated: now }); }
+      } else {
+        currentDeckId = String(now);
+        decks.push({ id: currentDeckId, name, cards, created: now, updated: now });
+      }
+      saveDecksStorage();
+      deckUnsaved = false;
+      const fb = document.getElementById('deckSaveFeedback');
+      fb.textContent = '저장됨 ✓'; fb.style.color = '#2e7d32';
+      setTimeout(() => { fb.textContent = ''; }, 2000);
+    }
+
+    // ── Toast ────────────────────────────────────────────────
+    function showDeckToast(msg) {
+      let toast = document.getElementById('deckToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'deckToast';
+        toast.className = 'deck-toast';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    // ── Mobile tab switch ─────────────────────────────────────
+    function switchDeckMobileTab(tab) {
+      const pool = document.getElementById('dePool');
+      const panel = document.getElementById('dePanel');
+      const btnPool = document.getElementById('mobPool');
+      const btnDeck = document.getElementById('mobDeck');
+      if (!pool) return;
+      if (tab === 'pool') {
+        pool.style.display = ''; panel.style.display = 'none';
+        btnPool?.classList.add('active'); btnDeck?.classList.remove('active');
+      } else {
+        pool.style.display = 'none'; panel.style.display = '';
+        btnDeck?.classList.add('active'); btnPool?.classList.remove('active');
+      }
+    }
+
+    // Init on load
+    loadDecks();
   </script>
 
 </body>
