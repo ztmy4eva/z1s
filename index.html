@@ -238,8 +238,8 @@
               <div class="de-pool" id="dePool">
                 <div class="de-pool-filters">
                   <div class="de-season-tabs" id="deckSeasonTabs">
-                    <button class="de-stab active" data-season="all" onclick="setDeckSeason('all',this)">전체</button>
-                    <button class="de-stab" data-season="1" onclick="setDeckSeason('1',this)">S1</button>
+                    <button class="de-stab" data-season="all" onclick="setDeckSeason('all',this)">전체</button>
+                    <button class="de-stab active" data-season="1" onclick="setDeckSeason('1',this)">S1</button>
                     <button class="de-stab" data-season="2" onclick="setDeckSeason('2',this)">S2</button>
                     <button class="de-stab" data-season="3" onclick="setDeckSeason('3',this)">S3</button>
                     <button class="de-stab" data-season="4" onclick="setDeckSeason('4',this)">S4</button>
@@ -262,7 +262,10 @@
                 <div class="de-panel-top">
                   <div id="deckRarityDist" class="de-rarity-dist"></div>
                 </div>
-                <div id="deckCardList" class="de-card-list"></div>
+                <div id="deckCardList" class="de-card-list"
+                     ondragover="event.preventDefault();this.classList.add('de-drop-active')"
+                     ondragleave="this.classList.remove('de-drop-active')"
+                     ondrop="handleDeckDrop(event)"></div>
                 <div class="de-panel-footer">
                   <button class="de-clear-btn" onclick="clearDeck()">전체 삭제</button>
                   <span id="deckSaveFeedback" class="de-save-feedback"></span>
@@ -2120,9 +2123,9 @@
       document.getElementById('deckNameInput').value = deck ? deck.name : '새 덱';
       document.getElementById('deckListScreen').style.display = 'none';
       document.getElementById('deckEditorScreen').style.display = '';
-      // reset filters
-      deckPoolSeason = 'all'; deckPoolRarity = 'all';
-      document.querySelectorAll('.de-stab').forEach((b,i) => b.classList.toggle('active', i===0));
+      // reset filters — default to S1
+      deckPoolSeason = '1'; deckPoolRarity = 'all';
+      document.querySelectorAll('.de-stab').forEach(b => b.classList.toggle('active', b.dataset.season === '1'));
       document.querySelectorAll('.de-rf').forEach((b,i) => b.classList.toggle('active', i===0));
       document.getElementById('deckSearch').value = '';
       // default mobile to pool tab
@@ -2197,15 +2200,14 @@
 
     function renderDeckPool() {
       const poolGrid = document.getElementById('deckPoolGrid');
-      const search = (document.getElementById('deckSearch')?.value || '').trim().toLowerCase();
-      const cards  = CARDS.filter(c => {
+      const search   = (document.getElementById('deckSearch')?.value || '').trim().toLowerCase();
+      const total    = deckTotal();
+      const cards    = CARDS.filter(c => {
         if (deckPoolSeason !== 'all' && c.season !== deckPoolSeason) return false;
         if (deckPoolRarity !== 'all' && c.rarity !== deckPoolRarity && !(deckPoolRarity==='SE'&&c.rarity==='SEC')) return false;
         if (search && !c.name.toLowerCase().includes(search)) return false;
         return true;
       });
-
-      const total = deckTotal();
 
       poolGrid.innerHTML = cards.map(c => {
         const inDeck = currentDeckMap.get(c.src) || 0;
@@ -2217,101 +2219,136 @@
         if (inDeck === 1) badge = `<div class="dp-badge dp-badge-1">1</div>`;
         if (inDeck === 2) badge = `<div class="dp-badge dp-badge-2">2</div>`;
         return `<div class="dp-card ${owned?'':'dp-unowned'} ${atMax?'dp-at-max':''} ${full?'dp-full-deck':''}"
-          onclick="addToDeckCard('${c.src}')"
-          title="${c.name} (${c.rarity})${!owned?' — 미보유':''}">
+          data-src="${c.src}" draggable="true">
           <div class="dp-img-wrap">
-            <img src="${c.src}" loading="lazy" alt="${c.name}">
+            <img src="${c.src}" loading="lazy" alt="${c.name}" draggable="false">
             ${badge}
             ${!owned ? '<div class="dp-unowned-overlay"></div>' : ''}
           </div>
           <div class="dp-label" style="color:${col}">${c.rarity}</div>
         </div>`;
       }).join('') || `<p style="color:#bbb;padding:20px;grid-column:1/-1">카드가 없습니다</p>`;
+
+      // Attach click, hover, drag listeners after render
+      poolGrid.querySelectorAll('.dp-card').forEach(el => {
+        const src  = el.dataset.src;
+        const card = CARDS.find(c => c.src === src);
+        if (!src) return;
+        el.addEventListener('click', () => addToDeckCard(src));
+        if (card) {
+          el.addEventListener('mouseenter', () => showHoverPreview(card, el));
+          el.addEventListener('mouseleave', hideHoverPreview);
+        }
+        el.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', src);
+          e.dataTransfer.effectAllowed = 'copy';
+          el.classList.add('dp-dragging');
+        });
+        el.addEventListener('dragend', () => el.classList.remove('dp-dragging'));
+      });
+    }
+
+    function handleDeckDrop(e) {
+      e.preventDefault();
+      document.getElementById('deckCardList').classList.remove('de-drop-active');
+      const src = e.dataTransfer.getData('text/plain');
+      if (src) addToDeckCard(src);
     }
 
     function addToDeckCard(src) {
       const current = currentDeckMap.get(src) || 0;
       const total   = deckTotal();
       if (current >= 2) {
-        // shake the card
-        const dpCards = document.querySelectorAll('.dp-card');
-        dpCards.forEach(el => { if (el.getAttribute('onclick')?.includes(src)) { el.classList.add('dp-shake'); setTimeout(()=>el.classList.remove('dp-shake'),500); }});
+        const el = document.querySelector(`.dp-card[data-src="${CSS.escape(src)}"]`);
+        if (el) { el.classList.add('dp-shake'); setTimeout(() => el.classList.remove('dp-shake'), 500); }
         return;
       }
-      if (total >= 20) {
-        showDeckToast('덱이 가득 찼습니다 (20/20)');
-        return;
-      }
+      if (total >= 20) { showDeckToast('덱이 가득 찼습니다 (20/20)'); return; }
       currentDeckMap.set(src, current + 1);
       deckUnsaved = true;
-      // update just this card's badge for speed (don't full re-render)
       updatePoolCard(src);
       renderDeckPanel();
       updateDeckCounter();
     }
 
     function updatePoolCard(src) {
-      // Fast update of just the badge without full re-render
-      const dpCards = document.querySelectorAll('.dp-card');
-      const inDeck = currentDeckMap.get(src) || 0;
+      const el     = document.querySelector(`.dp-card[data-src="${CSS.escape(src)}"]`);
       const total  = deckTotal();
-      dpCards.forEach(el => {
-        const onclick = el.getAttribute('onclick') || '';
-        const elSrc = onclick.match(/addToDeckCard\('(.+?)'\)/)?.[1];
-        if (!elSrc) return;
-        // Update MAX state for all cards if deck just became full
-        if (total >= 20) el.classList.add('dp-full-deck');
-        else el.classList.remove('dp-full-deck');
-        if (elSrc !== src) return;
-        const wrap = el.querySelector('.dp-img-wrap');
-        const old = wrap.querySelector('.dp-badge');
-        if (old) old.remove();
-        if (inDeck === 1) { const b=document.createElement('div'); b.className='dp-badge dp-badge-1'; b.textContent='1'; wrap.appendChild(b); }
-        if (inDeck === 2) { const b=document.createElement('div'); b.className='dp-badge dp-badge-2'; b.textContent='2'; wrap.appendChild(b); el.classList.add('dp-at-max'); }
+      // update full-deck state on all cards
+      document.querySelectorAll('.dp-card').forEach(c => {
+        const inD = currentDeckMap.get(c.dataset.src) || 0;
+        c.classList.toggle('dp-full-deck', total >= 20 && inD === 0);
       });
+      if (!el) return;
+      const inDeck = currentDeckMap.get(src) || 0;
+      const wrap   = el.querySelector('.dp-img-wrap');
+      const old    = wrap.querySelector('.dp-badge');
+      if (old) old.remove();
+      if (inDeck >= 1) {
+        const b = document.createElement('div');
+        b.className = `dp-badge dp-badge-${inDeck}`;
+        b.textContent = inDeck;
+        wrap.appendChild(b);
+      }
+      el.classList.toggle('dp-at-max', inDeck >= 2);
     }
 
     // ── Deck panel rendering ──────────────────────────────────
     function renderDeckPanel() {
       const list = document.getElementById('deckCardList');
+      const total = deckTotal();
+
       if (!currentDeckMap.size) {
-        list.innerHTML = '<p class="de-panel-empty">카드를 선택하세요</p>';
+        list.innerHTML = `<div class="de-drop-hint">
+          <div class="de-drop-hint-icon">🃏</div>
+          <div>카드를 클릭하거나<br>여기에 드래그하세요</div>
+        </div>
+        <div class="de-slot-grid">${Array(20).fill('<div class="de-slot-empty"></div>').join('')}</div>`;
         document.getElementById('deckRarityDist').innerHTML = '';
         return;
       }
 
-      // Sort by rarity then card number
       const RORDER = { UR:0, SR:1, R:2, N:3, SE:4, SEC:4 };
-      const entries = [...currentDeckMap.entries()]
-        .map(([src, cnt]) => ({ src, cnt, card: CARDS.find(c=>c.src===src) }))
+      // Expand to individual slots (one per copy, sorted)
+      const slots = [];
+      [...currentDeckMap.entries()]
+        .map(([src, cnt]) => ({ src, cnt, card: CARDS.find(c => c.src === src) }))
         .filter(x => x.card)
-        .sort((a,b) => (RORDER[a.card.rarity]??9)-(RORDER[b.card.rarity]??9) || cardNum(a.src)-cardNum(b.src));
+        .sort((a,b) => (RORDER[a.card.rarity]??9)-(RORDER[b.card.rarity]??9) || cardNum(a.src)-cardNum(b.src))
+        .forEach(({src, cnt, card}) => {
+          for (let i = 0; i < cnt; i++) slots.push({ src, card, copy: i+1, total: cnt });
+        });
 
-      list.innerHTML = entries.map(({src, cnt, card}) => {
-        const col   = DECK_RC[card.rarity] || '#999';
-        const n     = cardNum(src);
-        const id    = `S${card.season}-${String(n).padStart(3,'0')}`;
-        const owned = isOwned(src);
-        return `<div class="de-item ${owned?'':'de-item-unowned'}">
-          <img class="de-item-img" src="${src}" alt="${card.name}">
-          <div class="de-item-info">
-            <span class="de-item-name">${card.name}</span>
-            <span class="de-item-id" style="color:${col}">${card.rarity} · ${id}</span>
-          </div>
-          <div class="de-item-cnt ${cnt===2?'de-cnt-2':''}">${cnt===2?'×2':'×1'}</div>
-          <button class="de-item-minus" onclick="removeFromDeck('${src}')">−</button>
-        </div>`;
-      }).join('');
+      const emptyCount = 20 - slots.length;
 
-      // Rarity distribution badges
+      list.innerHTML = `<div class="de-slot-grid">
+        ${slots.map(({src, card, copy, total}) => {
+          const col  = DECK_RC[card.rarity] || '#999';
+          const dup  = total === 2;
+          return `<div class="de-slot de-slot-filled ${dup && copy===2 ? 'de-slot-dup' : ''}"
+            data-src="${src}" title="${card.name} (${card.rarity}) — 클릭하여 제거">
+            <img src="${src}" alt="${card.name}" draggable="false">
+            <div class="de-slot-rarity" style="background:${col}">${card.rarity}</div>
+            ${dup && copy === 1 ? '<div class="de-slot-x2-badge">×2</div>' : ''}
+          </div>`;
+        }).join('')}
+        ${Array(emptyCount).fill('<div class="de-slot-empty"></div>').join('')}
+      </div>`;
+
+      // Click to remove
+      list.querySelectorAll('.de-slot-filled').forEach(el => {
+        el.addEventListener('click', () => removeFromDeck(el.dataset.src));
+      });
+
+      // Rarity distribution
       const dist = {};
-      entries.forEach(({card, cnt}) => {
+      slots.forEach(({card}) => {
         const r = card.rarity === 'SEC' ? 'SE' : card.rarity;
-        dist[r] = (dist[r]||0) + cnt;
+        dist[r] = (dist[r]||0) + 1;
       });
       document.getElementById('deckRarityDist').innerHTML =
         Object.entries(dist).map(([r,v]) =>
-          `<span class="de-dist-chip" style="color:${DECK_RC[r]};border-color:${DECK_RC[r]}">${r} <b>${v}</b></span>`
+          `<span class="de-dist-chip" style="color:${DECK_RC[r]};border-color:${DECK_RC[r]}">${r}<b>${v}</b></span>`
         ).join('');
     }
 
@@ -2365,9 +2402,7 @@
       }
       saveDecksStorage();
       deckUnsaved = false;
-      const fb = document.getElementById('deckSaveFeedback');
-      fb.textContent = '저장됨 ✓'; fb.style.color = '#2e7d32';
-      setTimeout(() => { fb.textContent = ''; }, 2000);
+      showDeckList();
     }
 
     // ── Toast ────────────────────────────────────────────────

@@ -2132,8 +2132,76 @@ button.active {
 }
 .de-dist-chip b { margin-left: 3px; }
 
-.de-card-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+.de-card-list { flex: 1; overflow-y: auto; padding: 0; }
 .de-panel-empty { color: #ccc; font-size: 13px; text-align: center; padding: 30px 16px; }
+
+/* ── Drop hint & drop active ─────────────────────────────── */
+.de-drop-hint {
+  text-align: center; color: #ccc; font-size: 12px;
+  padding: 14px 12px 6px; line-height: 1.6;
+}
+.de-drop-hint-icon { font-size: 26px; margin-bottom: 2px; }
+.de-drop-active {
+  background: #e8f4fd !important;
+  outline: 2px dashed #1565c0;
+  outline-offset: -4px;
+}
+
+/* ── Slot grid ───────────────────────────────────────────── */
+.de-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 6px 8px 12px;
+}
+.de-slot-empty {
+  aspect-ratio: 2 / 3;
+  border: 1.5px dashed #e0e0e0;
+  border-radius: 5px;
+  background: #fafafa;
+}
+.de-slot {
+  position: relative;
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 2 / 3;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.de-slot-filled:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+.de-slot-filled:hover::after {
+  content: '✕';
+  position: absolute;
+  inset: 0;
+  background: rgba(183,28,28,0.6);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.de-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.de-slot-rarity {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  text-align: center; font-size: 8px; font-weight: 900;
+  color: #fff; padding: 2px 0;
+}
+.de-slot-x2-badge {
+  position: absolute; top: 3px; right: 3px;
+  background: #b8860b; color: #fff;
+  font-size: 9px; font-weight: 900;
+  padding: 1px 4px; border-radius: 3px;
+}
+.de-slot-dup { outline: 2px solid #b8860b; outline-offset: -2px; }
+
+/* ── Drag state ──────────────────────────────────────────── */
+.dp-dragging { opacity: 0.4; transform: scale(0.93); }
 
 .de-item {
   display: flex; align-items: center; gap: 8px;
