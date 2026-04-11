@@ -239,6 +239,7 @@
     let compareFilter     = 'all';  // 'all' | 'need' | 'offer' | 'both'
     let isProfileView     = false;  // viewing someone else's collection (read-only)
     let cmpPartnerId      = null;   // last compared partner ID
+    let summaryTemplate   = localStorage.getItem('zc_sv_tpl') || 'default';
     let _currentModalSrc  = null;   // currently open modal card src
 
     // ── Wishlist ─────────────────────────────────────────────
@@ -1440,6 +1441,12 @@
       renderCards();
     }
 
+    function setSummaryTemplate(t) {
+      summaryTemplate = t;
+      localStorage.setItem('zc_sv_tpl', t);
+      renderSummary();
+    }
+
     function renderSummary() {
       const el = document.getElementById('summaryView');
       el.style.display = 'block';
@@ -1515,6 +1522,60 @@
         </div>`;
       }).join('');
 
+      // ── Minimal template: compact text table ──
+      const minimalGrid = SEASONS.map(s => {
+        const sc = CARDS.filter(c => c.season === s);
+        const rows = RARITIES.map(r => {
+          const cards = sc
+            .filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC'))
+            .sort((a, b) => cardNum(a.src) - cardNum(b.src));
+          if (!cards.length) return '';
+          return cards.map(c => {
+            const owned = isOwned(c.src);
+            const cnt   = getCount(c.src);
+            const n     = cardNum(c.src);
+            return `<tr class="mn-row ${owned ? 'mn-owned' : 'mn-miss'}">
+              <td class="mn-r" style="color:${RC[r]}">${r}</td>
+              <td class="mn-id">S${s}-${String(n).padStart(3,'0')}</td>
+              <td class="mn-name">${c.name}</td>
+              <td class="mn-cnt">${owned ? (cnt > 1 ? `×${cnt}` : '✓') : '—'}</td>
+            </tr>`;
+          }).join('');
+        }).join('');
+        const sOwned = sc.filter(c => isOwned(c.src)).length;
+        return `<div class="mn-season">
+          <div class="mn-season-head">시즌 ${s} <span class="mn-frac">${sOwned} / ${sc.length}</span></div>
+          <table class="mn-table"><tbody>${rows}</tbody></table>
+        </div>`;
+      }).join('');
+
+      // ── Season card template: big visual blocks ──
+      const seasonCards = SEASONS.map(s => {
+        const sc     = CARDS.filter(c => c.season === s);
+        const sOwned = sc.filter(c => isOwned(c.src)).length;
+        const sPct   = Math.round(sOwned / sc.length * 100);
+        const rarityRows = RARITIES.map(r => {
+          const total = sc.filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC')).length;
+          if (!total) return '';
+          const owned = sc.filter(c => (c.rarity === r || (r === 'SE' && c.rarity === 'SEC')) && isOwned(c.src)).length;
+          const rPct  = Math.round(owned / total * 100);
+          return `<div class="sc-rarity-row">
+            <span class="sc-r-label" style="color:${RC[r]}">${r}</span>
+            <div class="sc-r-bar-wrap"><div class="sc-r-bar" style="width:${rPct}%;background:${RC[r]}"></div></div>
+            <span class="sc-r-frac">${owned}/${total}</span>
+          </div>`;
+        }).join('');
+        return `<div class="sc-card">
+          <div class="sc-top">
+            <span class="sc-season-num">시즌 ${s}</span>
+            <span class="sc-pct ${sPct===100?'sv-complete':''}">${sPct}%</span>
+          </div>
+          <div class="sc-big-num">${sOwned}<span class="sc-big-den"> / ${sc.length}</span></div>
+          <div class="sc-bar-wrap"><div class="sc-bar" style="width:${sPct}%"></div></div>
+          <div class="sc-rarities">${rarityRows}</div>
+        </div>`;
+      }).join('');
+
       // ── Duplicates ──
       let dupSection = '';
       const dups = CARDS.filter(c => getCount(c.src) > 1)
@@ -1538,6 +1599,12 @@
         <div class="sv-wrap">
           <div class="sv-back-row">
             <button class="sv-back-btn" onclick="showCollectionCards()">← 카드로 돌아가기</button>
+            <div class="sv-template-picker">
+              <span class="sv-template-label">템플릿</span>
+              <button class="sv-tpl-btn ${summaryTemplate==='default'?'active':''}" onclick="setSummaryTemplate('default')">기본</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='minimal'?'active':''}" onclick="setSummaryTemplate('minimal')">미니멀</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='season'?'active':''}" onclick="setSummaryTemplate('season')">시즌 카드</button>
+            </div>
           </div>
 
           <header class="sv-header">
@@ -1569,6 +1636,7 @@
             <div class="sv-season-grid">${seasonTable}</div>
           </section>
 
+          ${summaryTemplate === 'default' ? `
           <section class="sv-section">
             <h2 class="sv-section-title">카드 목록
               <span class="sv-badge" style="background:#2e7d32">${ownedUnique} 보유</span>
@@ -1581,8 +1649,17 @@
             </div>
             ${unifiedGrid}
           </section>
-
           ${dupSection}
+          ` : summaryTemplate === 'minimal' ? `
+          <section class="sv-section">
+            <h2 class="sv-section-title">카드 목록</h2>
+            ${minimalGrid}
+          </section>
+          ${dupSection}
+          ` : `
+          ${seasonCards}
+          `}
+
           ${missing.length === 0 ? '<section class="sv-section"><p class="sv-complete-msg">모든 카드를 보유하고 있습니다! 🎉</p></section>' : ''}
 
         </div>`;
@@ -1617,17 +1694,15 @@
     }
 
     // ── Likes system ─────────────────────────────────────────
-    let _liking      = false;
-    let _likeCount   = 0;     // authoritative count for the open modal
+    let _likeCount = 0; // tracks current displayed count
 
     async function fetchLikeCount(src) {
       try {
         const resp = await fetch('/api/likes?card=' + encodeURIComponent(src));
         if (!resp.ok) return;
         const { count } = await resp.json();
-        // Only apply if this card is still open AND we haven't already liked it
-        // (don't let the initial fetch overwrite an optimistic increment)
-        if (_currentModalSrc === src && !_liking) {
+        // Only overwrite if user hasn't clicked yet (count still shows '…' or 0)
+        if (_currentModalSrc === src && _likeCount === 0) {
           _likeCount = count;
           document.getElementById('likeCount').textContent = count;
         }
@@ -1635,18 +1710,16 @@
     }
 
     async function likeCard() {
-      if (_liking) return;
       const src = _currentModalSrc;
       if (!src) return;
 
-      // Client-side cooldown: 3s per card
+      // 1s cooldown per click — prevents double-fire but allows repeated likes
       const lsKey = 'zc_lk_' + src;
       const ts = parseInt(localStorage.getItem(lsKey) || '0', 10);
-      if (Date.now() - ts < 3000) return;
+      if (Date.now() - ts < 1000) return;
       localStorage.setItem(lsKey, String(Date.now()));
 
-      // Optimistic UI — increment immediately from known count
-      _liking = true;
+      // Optimistic: increment immediately
       _likeCount += 1;
       document.getElementById('likeCount').textContent = _likeCount;
 
@@ -1654,22 +1727,17 @@
       btn.classList.add('liked', 'bump');
       btn.addEventListener('animationend', () => btn.classList.remove('bump'), { once: true });
 
-      try {
-        const resp = await fetch('/api/likes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ card: src }),
-        });
-        if (resp.ok) {
-          const { count } = await resp.json();
-          if (_currentModalSrc === src) {
-            _likeCount = count;
-            document.getElementById('likeCount').textContent = count;
-          }
+      // Fire and forget — sync count from server response
+      fetch('/api/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ card: src }),
+      }).then(r => r.ok ? r.json() : null).then(data => {
+        if (data && _currentModalSrc === src) {
+          _likeCount = data.count;
+          document.getElementById('likeCount').textContent = data.count;
         }
-      } catch {} finally {
-        _liking = false;
-      }
+      }).catch(() => {});
     }
 
     async function showLikesRanking() {
