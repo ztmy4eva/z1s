@@ -722,105 +722,125 @@ button.active {
   color: #fff !important;
 }
 
-/* ── Summary view wrapper ───────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   SUMMARY VIEW
+   ═══════════════════════════════════════════════════════════ */
+
 .sv-wrap {
-  max-width: 860px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 20px 24px 60px;
+  padding: 16px 20px 60px;
   font-family: 'Hiragino Sans', 'Noto Sans KR', sans-serif;
 }
 
-/* ── Hero stats ─────────────────────────────────────────── */
+/* ── Hero header ─────────────────────────────────────────── */
 .sv-header {
-  margin-bottom: 24px;
-  padding: 20px 24px;
   background: #1a1a2e;
-  border-radius: 12px;
+  border-radius: 16px;
   color: #e0e0ff;
-  display: flex;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0 20px;
   align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
 }
 
-.sv-hero-main {
-  flex: 1;
-  min-width: 160px;
+.sv-ring-wrap {
+  grid-row: 1 / 3;
+  width: 100px;
+  flex-shrink: 0;
 }
+.sv-ring-svg { width: 100%; height: auto; display: block; }
 
-.sv-hero {
+.sv-header-mid {
+  grid-column: 2;
+  grid-row: 1;
+}
+.sv-hero-num-row {
   display: flex;
   align-items: baseline;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 6px;
 }
 .sv-hero-num {
-  font-size: 52px;
+  font-size: 48px;
   font-weight: 900;
   line-height: 1;
   color: #fff;
 }
 .sv-hero-den {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 400;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.35);
 }
 .sv-hero-label {
-  font-size: 14px;
-  color: rgba(255,255,255,0.55);
-  margin-left: 4px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 10px;
 }
-
-.sv-hero-bar-wrap {
-  height: 6px;
-  background: rgba(255,255,255,0.12);
-  border-radius: 3px;
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-.sv-hero-bar {
-  height: 100%;
-  background: #69f0ae;
-  border-radius: 3px;
-  transition: width 0.5s ease;
-}
-
-.sv-meta {
+.sv-stat-row {
   display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  flex-shrink: 0;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-.sv-meta-item {
+.sv-stat-pill {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-}
-.sv-meta-item strong {
-  font-size: 26px;
-  font-weight: 900;
-  line-height: 1;
+  background: rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
   color: #fff;
+  min-width: 48px;
 }
-.sv-meta-sub {
-  font-size: 11px;
-  color: rgba(255,255,255,0.5);
-  white-space: nowrap;
+.sv-stat-pill small {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.45);
 }
-.sv-meta-dup strong { color: #ffab40; }
+.sv-stat-dup { color: #ffab40; }
+.sv-stat-miss { color: #ef5350; }
+.sv-stat-done { color: #69f0ae; }
 
-/* ── Sections ───────────────────────────────────────────── */
-.sv-section {
-  margin-bottom: 24px;
+.sv-season-mini {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 120px;
 }
+.sv-smini { display: flex; align-items: center; gap: 6px; }
+.sv-smini-label { font-size: 11px; font-weight: 800; width: 20px; flex-shrink: 0; }
+.sv-smini-bar-wrap { flex: 1; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.sv-smini-bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.sv-smini-pct { font-size: 10px; color: rgba(255,255,255,0.45); width: 28px; text-align: right; flex-shrink: 0; }
+
+.sv-hero-actions {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Shared section styles ───────────────────────────────── */
+.sv-section { margin-bottom: 24px; }
 .sv-section-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #888;
-  margin: 0 0 14px;
+  color: #999;
+  margin: 0 0 12px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -835,201 +855,137 @@ button.active {
   text-transform: none;
   letter-spacing: 0;
 }
-.sv-badge-miss {
-  background: #b71c1c;
-}
+.sv-badge-miss { background: #b71c1c; }
 
-/* ── Season breakdown grid ──────────────────────────────── */
+.sv-complete { color: #2e7d32 !important; font-weight: 800 !important; }
+.sv-complete-msg { color: #2e7d32; font-weight: 700; font-size: 14px; }
+.sv-empty { color: #bbb; font-size: 13px; margin: 0; padding: 8px 0; }
+
+/* ── Season breakdown grid (기본 / 미니멀 shared) ─────────── */
 .sv-season-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
-
 .sv-season-block {
   background: #f9f9fb;
   border: 1px solid #e8e8e8;
   border-radius: 10px;
-  padding: 14px 16px;
+  padding: 12px 14px;
 }
-
 .sv-season-head {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
-.sv-season-label {
-  font-size: 13px;
-  font-weight: 800;
-  color: #1a1a2e;
-}
-.sv-season-frac {
-  font-size: 12px;
-  color: #666;
-  flex: 1;
-}
-.sv-season-pct {
-  font-size: 12px;
-  font-weight: 700;
-  color: #888;
-}
+.sv-season-label { font-size: 13px; font-weight: 800; color: #1a1a2e; }
+.sv-season-frac  { font-size: 12px; color: #666; flex: 1; }
+.sv-season-pct   { font-size: 12px; font-weight: 700; color: #888; }
 
-.sv-table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 12px;
-}
-.sv-table td {
-  padding: 3px 0;
-  vertical-align: middle;
-}
+.sv-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.sv-table td { padding: 3px 0; vertical-align: middle; }
 .sv-table td:last-child { text-align: right; }
+.sv-rarity { font-size: 11px; font-weight: 900; display: inline-block; width: 24px; }
+.sv-frac   { font-weight: 700; color: #1a1a2e; padding: 0 8px; }
+.sv-total  { color: #bbb; font-weight: 400; }
+.sv-bar    { display: inline-block; width: 60px; height: 4px; background: #eee; border-radius: 3px; overflow: hidden; vertical-align: middle; }
+.sv-bar-fill { display: block; height: 100%; border-radius: 3px; }
+.sv-pct    { color: #888; font-size: 11px; }
 
-.sv-rarity {
-  font-size: 11px;
-  font-weight: 900;
-  display: inline-block;
-  width: 24px;
-}
-.sv-frac {
-  font-weight: 700;
-  color: #1a1a2e;
-  padding: 0 8px;
-}
-.sv-total { color: #bbb; font-weight: 400; }
-
-.sv-bar {
-  display: inline-block;
-  width: 70px;
-  height: 5px;
-  background: #eee;
-  border-radius: 3px;
-  overflow: hidden;
-  vertical-align: middle;
-}
-.sv-bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-}
-
-.sv-pct { color: #888; font-size: 11px; }
-.sv-complete { color: #2e7d32 !important; font-weight: 800 !important; }
-
-/* ── Chip-based card list ───────────────────────────────── */
-.sv-legend {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-
-.sv-chip-group {
-  margin-bottom: 12px;
-}
-.sv-chip-season {
-  font-size: 11px;
-  font-weight: 700;
-  color: #aaa;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.sv-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
+/* ── Chip list ───────────────────────────────────────────── */
+.sv-legend { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.sv-chip-group { margin-bottom: 12px; }
+.sv-chip-season { font-size: 11px; font-weight: 700; color: #aaa; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+.sv-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .sv-chip {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  font-family: monospace;
-  padding: 2px 7px;
-  border-radius: 5px;
+  font-size: 11px; font-weight: 700; font-family: monospace;
+  padding: 2px 7px; border-radius: 5px;
+  border: 1.5px solid #ddd; color: #444; background: #fff;
+  white-space: nowrap; cursor: default;
+}
+.sv-chip-dup     { background: #fff8f3; color: #e65100; border-color: #e65100; }
+.sv-chip-unowned { background: #fafafa; color: #ccc; border-color: rgba(0,0,0,0.1); border-style: dashed; }
+.sv-chip-miss    { background: #f5f5f5; color: #bbb; border-color: #ddd; }
+
+.sv-unified-rarity { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.sv-unified-r { min-width: 28px; margin-top: 3px; flex-shrink: 0; font-size: 11px; font-weight: 900; }
+
+/* ── Duplicates list ─────────────────────────────────────── */
+.sv-dup-list { display: flex; flex-direction: column; gap: 4px; }
+.sv-dup-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 10px; background: #fff8f3;
+  border-left: 3px solid #e65100;
+  border-radius: 0 6px 6px 0; font-size: 12px;
+}
+.sv-dup-id   { font-family: monospace; font-weight: 700; color: #1a1a2e; min-width: 70px; }
+.sv-dup-name { color: #555; flex: 1; }
+.sv-dup-cnt  { font-weight: 800; color: #e65100; }
+
+/* ── 시즌 카드 template ───────────────────────────────────── */
+.sc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.sc-card { background: #1a1a2e; border-radius: 14px; padding: 20px 22px; color: #e0e0ff; }
+.sc-top  { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.sc-season-num { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.5; }
+.sc-pct  { font-size: 22px; font-weight: 900; color: #69f0ae; }
+.sc-pct.sv-complete { color: #ffd740; }
+.sc-big-num  { font-size: 44px; font-weight: 900; line-height: 1; margin-bottom: 10px; }
+.sc-big-den  { font-size: 20px; font-weight: 400; opacity: 0.3; }
+.sc-bar-wrap { height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 14px; overflow: hidden; }
+.sc-bar      { height: 100%; background: #69f0ae; border-radius: 3px; transition: width 0.4s; }
+.sc-rarities { display: flex; flex-direction: column; gap: 5px; }
+.sc-rarity-row { display: flex; align-items: center; gap: 8px; }
+.sc-r-label    { width: 26px; font-size: 10px; font-weight: 900; flex-shrink: 0; }
+.sc-r-bar-wrap { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.sc-r-bar      { height: 100%; border-radius: 2px; opacity: 0.75; }
+.sc-r-frac     { width: 36px; text-align: right; font-size: 10px; opacity: 0.45; }
+
+/* ── 도감 template ───────────────────────────────────────── */
+.dg-season { margin-bottom: 20px; }
+.dg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dg-label { font-size: 13px; font-weight: 800; }
+.dg-frac  { font-size: 12px; color: #888; flex: 1; }
+.dg-pct   { font-size: 12px; font-weight: 700; color: #888; }
+.dg-grid  { display: flex; flex-wrap: wrap; gap: 3px; }
+.dg-sq {
+  width: 14px; height: 14px;
+  border-radius: 3px;
   border: 1.5px solid #ddd;
-  color: #444;
-  background: #fff;
-  white-space: nowrap;
+  display: inline-block;
+  transition: transform 0.1s;
   cursor: default;
 }
-.sv-chip-dup {
-  background: #fff8f3;
-  color: #e65100;
-  border-color: #e65100;
-}
-.sv-chip-unowned {
-  background: #fafafa;
-  color: #bbb;
-  border-color: rgba(183,28,28,0.2);
-  border-style: dashed;
-}
+.dg-sq.dg-owned { border-style: solid; }
+.dg-sq:hover { transform: scale(1.5); z-index: 1; }
+.dg-legend-sq { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 1.5px solid; vertical-align: middle; margin-right: 3px; }
 
-.sv-chip-miss {
-  background: #f5f5f5;
-  color: #bbb;
-  border-color: #ddd;
-}
+/* ── 트레이더 template ───────────────────────────────────── */
+.td-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.td-col-head { font-size: 13px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.td-col-offer { color: #2e7d32; }
+.td-col-need  { color: #b71c1c; }
+.td-offer-chip { background: #f1f8f1 !important; }
+.td-need-chip  { background: #fff5f5 !important; }
 
-.sv-empty {
-  color: #bbb;
-  font-size: 13px;
+/* ── 희귀도별 template ───────────────────────────────────── */
+.rf-block { margin-bottom: 20px; }
+.rf-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  background: #f9f9fb;
+  border-radius: 8px;
 }
-
-/* ── Duplicates list ────────────────────────────────────── */
-.sv-dup-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.sv-dup-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 10px;
-  background: #fff8f3;
-  border-left: 3px solid #e65100;
-  border-radius: 0 6px 6px 0;
-  font-size: 12px;
-}
-.sv-dup-id {
-  font-family: monospace;
-  font-weight: 700;
-  color: #1a1a2e;
-  min-width: 70px;
-}
-.sv-dup-name {
-  color: #555;
-  flex: 1;
-}
-.sv-dup-cnt {
-  font-weight: 800;
-  color: #e65100;
-}
-
-/* ── Missing cards ──────────────────────────────────────── */
-.sv-miss-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.sv-miss-rarity {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.sv-miss-r {
-  min-width: 52px;
-  margin-top: 3px;
-}
-
-.sv-complete-msg {
-  color: #2e7d32;
-  font-weight: 700;
-  font-size: 14px;
-}
+.rf-r-big  { font-size: 18px; font-weight: 900; width: 34px; flex-shrink: 0; }
+.rf-bar-wrap { flex: 1; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+.rf-bar    { height: 100%; border-radius: 3px; transition: width 0.4s; opacity: 0.75; }
+.rf-frac   { font-size: 13px; font-weight: 700; color: #333; min-width: 44px; text-align: right; }
+.rf-pct    { font-size: 13px; font-weight: 700; color: #888; min-width: 36px; text-align: right; }
+.rf-seasons { padding-left: 4px; }
+.rf-season-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.rf-s-label { font-size: 11px; font-weight: 800; width: 20px; flex-shrink: 0; margin-top: 3px; }
 
 /* ── Compare banner ─────────────────────────────────────── */
 #compareBanner {
@@ -1729,6 +1685,26 @@ button.active {
   .sv-season-grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  .sv-header {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .sv-ring-wrap { width: 80px; }
+  .sv-season-mini {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin-top: 8px;
+  }
+  .sv-smini { flex: 1; min-width: 80px; }
+  .sv-hero-actions { grid-column: 1 / 3; grid-row: 3; }
+  .td-split { grid-template-columns: 1fr; }
+  .sc-grid  { grid-template-columns: 1fr 1fr; }
 
   .cmp-banner,
   #profileBanner {

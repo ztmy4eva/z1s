@@ -1451,9 +1451,10 @@
       const el = document.getElementById('summaryView');
       el.style.display = 'block';
 
-      const RARITIES  = ['UR','SR','R','N','SE'];
-      const RC = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#666', SE:'#ad1457' };
-      const SEASONS = ['1','2','3','4'];
+      const RARITIES = ['UR','SR','R','N','SE'];
+      const RC = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#555', SE:'#ad1457' };
+      const SEASONS  = ['1','2','3','4'];
+      const SEASON_COLORS = { '1':'#5c6bc0','2':'#26a69a','3':'#ef6c00','4':'#8d6e63' };
 
       // ── Global stats ──
       const totalCards  = CARDS.length;
@@ -1593,74 +1594,203 @@
         </section>`;
       }
 
+      // ── 도감 template: tiny colored squares ──
+      const dogamGrid = SEASONS.map(s => {
+        const sc = CARDS.filter(c => c.season === s);
+        const squares = sc.map(c => {
+          const owned = isOwned(c.src);
+          const cnt   = getCount(c.src);
+          const col   = owned ? (RC[c.rarity] || '#999') : 'transparent';
+          const border = owned ? col : '#ddd';
+          const title = `${c.name} (${c.rarity})${cnt > 1 ? ' ×'+cnt : ''}`;
+          return `<span class="dg-sq ${owned?'dg-owned':''}" style="background:${col};border-color:${border}" title="${title}"></span>`;
+        }).join('');
+        const sOwned = sc.filter(c => isOwned(c.src)).length;
+        const sPct   = Math.round(sOwned / sc.length * 100);
+        return `<div class="dg-season">
+          <div class="dg-head">
+            <span class="dg-label" style="color:${SEASON_COLORS[s]}">시즌 ${s}</span>
+            <span class="dg-frac">${sOwned}/${sc.length}</span>
+            <span class="dg-pct ${sPct===100?'sv-complete':''}">${sPct}%</span>
+          </div>
+          <div class="dg-grid">${squares}</div>
+        </div>`;
+      }).join('');
+
+      // ── 트레이더 template: offer / need split ──
+      const traderOffer = [], traderNeed = [];
+      const RARITY_ORDER = { UR:0, SR:1, R:2, N:3, SE:4, SEC:4 };
+      CARDS.forEach(c => {
+        const cnt = getCount(c.src);
+        if (cnt > 1) traderOffer.push(c);
+        else if (cnt === 0) traderNeed.push(c);
+      });
+      traderOffer.sort((a,b) => (RARITY_ORDER[a.rarity]??9)-(RARITY_ORDER[b.rarity]??9) || cardNum(a.src)-cardNum(b.src));
+      traderNeed.sort((a,b)  => (RARITY_ORDER[a.rarity]??9)-(RARITY_ORDER[b.rarity]??9) || cardNum(a.src)-cardNum(b.src));
+      const traderChips = (arr, isOffer) => RARITIES.map(r => {
+        const cards = arr.filter(c => c.rarity === r || (r==='SE' && c.rarity==='SEC'));
+        if (!cards.length) return '';
+        const chips = cards.map(c => {
+          const n = cardNum(c.src); const cnt = getCount(c.src);
+          const label = `S${c.season}-${String(n).padStart(3,'0')}${cnt>1?` ×${cnt}`:''}`;
+          return `<span class="sv-chip ${isOffer?'td-offer-chip':'td-need-chip'}" style="border-color:${RC[r]}" title="${c.name}">${label}</span>`;
+        }).join('');
+        return `<div class="sv-unified-rarity">
+          <span class="sv-rarity sv-unified-r" style="color:${RC[r]}">${r}</span>
+          <div class="sv-chips">${chips}</div>
+        </div>`;
+      }).join('');
+      const traderSection = `
+        <div class="td-split">
+          <div class="td-col">
+            <div class="td-col-head td-col-offer">줄 수 있어요 <span class="sv-badge">${traderOffer.length}</span></div>
+            ${traderOffer.length ? traderChips(traderOffer, true) : '<p class="sv-empty">여분 없음</p>'}
+          </div>
+          <div class="td-col">
+            <div class="td-col-head td-col-need">필요해요 <span class="sv-badge sv-badge-miss">${traderNeed.length}</span></div>
+            ${traderNeed.length ? traderChips(traderNeed, false) : '<p class="sv-empty">미보유 없음 🎉</p>'}
+          </div>
+        </div>`;
+
+      // ── 희귀도별 template: rarity-first ──
+      const rarityFirst = RARITIES.map(r => {
+        const allCards = CARDS.filter(c => c.rarity === r || (r==='SE' && c.rarity==='SEC'));
+        if (!allCards.length) return '';
+        const total  = allCards.length;
+        const owned  = allCards.filter(c => isOwned(c.src)).length;
+        const rPct   = Math.round(owned/total*100);
+        const bySeason = SEASONS.map(s => {
+          const sc = allCards.filter(c => c.season === s).sort((a,b) => cardNum(a.src)-cardNum(b.src));
+          if (!sc.length) return '';
+          const chips = sc.map(c => {
+            const o = isOwned(c.src); const cnt = getCount(c.src); const n = cardNum(c.src);
+            const label = `S${s}-${String(n).padStart(3,'0')}${cnt>1?` ×${cnt}`:''}`;
+            const col = o ? (cnt>1?'#e65100':RC[r]) : 'transparent';
+            const cls = o ? (cnt>1?'sv-chip sv-chip-dup':'sv-chip') : 'sv-chip sv-chip-unowned';
+            return `<span class="${cls}" style="border-color:${o?(cnt>1?'#e65100':RC[r]):'rgba(0,0,0,0.12)'}" title="${c.name}">${label}</span>`;
+          }).join('');
+          return `<div class="rf-season-row"><span class="rf-s-label" style="color:${SEASON_COLORS[s]}">S${s}</span><div class="sv-chips">${chips}</div></div>`;
+        }).join('');
+        return `<div class="rf-block">
+          <div class="rf-head">
+            <span class="rf-r-big" style="color:${RC[r]}">${r}</span>
+            <div class="rf-bar-wrap"><div class="rf-bar" style="width:${rPct}%;background:${RC[r]}"></div></div>
+            <span class="rf-frac">${owned} / ${total}</span>
+            <span class="rf-pct ${rPct===100?'sv-complete':''}">${rPct}%</span>
+          </div>
+          <div class="rf-seasons">${bySeason}</div>
+        </div>`;
+      }).join('');
+
       const missing = CARDS.filter(c => !isOwned(c.src));
+
+      // ── Ring SVG for hero ──
+      const R2 = 54, CX = 64, CY = 64, STROKE = 10;
+      const circumference = 2 * Math.PI * R2;
+      const dash = (circumference * pct / 100).toFixed(1);
 
       el.innerHTML = `
         <div class="sv-wrap">
           <div class="sv-back-row">
             <button class="sv-back-btn" onclick="showCollectionCards()">← 카드로 돌아가기</button>
             <div class="sv-template-picker">
-              <span class="sv-template-label">템플릿</span>
-              <button class="sv-tpl-btn ${summaryTemplate==='default'?'active':''}" onclick="setSummaryTemplate('default')">기본</button>
-              <button class="sv-tpl-btn ${summaryTemplate==='minimal'?'active':''}" onclick="setSummaryTemplate('minimal')">미니멀</button>
-              <button class="sv-tpl-btn ${summaryTemplate==='season'?'active':''}" onclick="setSummaryTemplate('season')">시즌 카드</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='default'?'active':''}" onclick="setSummaryTemplate('default')" title="기본">기본</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='minimal'?'active':''}" onclick="setSummaryTemplate('minimal')" title="미니멀">미니멀</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='season'?'active':''}" onclick="setSummaryTemplate('season')" title="시즌 카드">시즌</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='dogam'?'active':''}" onclick="setSummaryTemplate('dogam')" title="도감">도감</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='trader'?'active':''}" onclick="setSummaryTemplate('trader')" title="트레이더">트레이더</button>
+              <button class="sv-tpl-btn ${summaryTemplate==='rarity'?'active':''}" onclick="setSummaryTemplate('rarity')" title="희귀도별">희귀도</button>
             </div>
           </div>
 
           <header class="sv-header">
-            <div class="sv-hero-main">
-              <div class="sv-hero">
-                <span class="sv-hero-num">${ownedUnique}<span class="sv-hero-den"> / ${totalCards}</span></span>
-                <span class="sv-hero-label">보유 카드</span>
+            <div class="sv-ring-wrap">
+              <svg class="sv-ring-svg" viewBox="0 0 128 128">
+                <circle cx="${CX}" cy="${CY}" r="${R2}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="${STROKE}"/>
+                <circle cx="${CX}" cy="${CY}" r="${R2}" fill="none" stroke="#69f0ae" stroke-width="${STROKE}"
+                  stroke-dasharray="${dash} ${circumference.toFixed(1)}"
+                  stroke-linecap="round" transform="rotate(-90 ${CX} ${CY})"/>
+                <text x="${CX}" y="${CY}" text-anchor="middle" dominant-baseline="central"
+                  fill="#fff" font-size="22" font-weight="900" font-family="sans-serif">${pct}%</text>
+              </svg>
+            </div>
+            <div class="sv-header-mid">
+              <div class="sv-hero-num-row">
+                <span class="sv-hero-num">${ownedUnique}</span>
+                <span class="sv-hero-den"> / ${totalCards}</span>
               </div>
-              <div class="sv-hero-bar-wrap">
-                <div class="sv-hero-bar" style="width:${pct}%"></div>
+              <div class="sv-hero-label">보유 카드</div>
+              <div class="sv-stat-row">
+                <div class="sv-stat-pill">${totalCopies}<small>총 보유</small></div>
+                ${duplicates > 0 ? `<div class="sv-stat-pill sv-stat-dup">${duplicates}<small>여분</small></div>` : ''}
+                ${missing.length > 0 ? `<div class="sv-stat-pill sv-stat-miss">${missing.length}<small>미보유</small></div>` : '<div class="sv-stat-pill sv-stat-done">완성!<small>🎉</small></div>'}
               </div>
             </div>
-            <div class="sv-meta">
-              <div class="sv-meta-item"><strong>${pct}%</strong><span class="sv-meta-sub">완성</span></div>
-              <div class="sv-meta-item"><strong>${totalCopies}</strong><span class="sv-meta-sub">총 보유</span></div>
-              ${duplicates > 0 ? `<div class="sv-meta-item sv-meta-dup"><strong>${duplicates}</strong><span class="sv-meta-sub">여분</span></div>` : ''}
-              ${missing.length > 0 ? `<div class="sv-meta-item sv-meta-miss"><strong>${missing.length}</strong><span class="sv-meta-sub">미보유</span></div>` : ''}
+            <div class="sv-season-mini">
+              ${SEASONS.map(s => {
+                const sc = CARDS.filter(c => c.season === s);
+                const so = sc.filter(c => isOwned(c.src)).length;
+                const sp = Math.round(so/sc.length*100);
+                return `<div class="sv-smini">
+                  <div class="sv-smini-label" style="color:${SEASON_COLORS[s]}">S${s}</div>
+                  <div class="sv-smini-bar-wrap"><div class="sv-smini-bar" style="width:${sp}%;background:${SEASON_COLORS[s]}"></div></div>
+                  <div class="sv-smini-pct ${sp===100?'sv-complete':''}">${sp}%</div>
+                </div>`;
+              }).join('')}
             </div>
             <div class="sv-hero-actions">
-              <button class="sv-link-btn" onclick="printCollection()">🖨 PDF 출력</button>
-              <button class="sv-link-btn" onclick="copyMissingList()">📋 미보유 목록 복사</button>
-              <button class="sv-link-btn" onclick="generateStatsImage()">🖼 이미지로 공유</button>
-              <span id="svCopyFeedback" style="font-size:12px"></span>
+              <button class="sv-link-btn" onclick="printCollection()">🖨 PDF</button>
+              <button class="sv-link-btn" onclick="copyMissingList()">📋 미보유 복사</button>
+              <button class="sv-link-btn" onclick="generateStatsImage()">🖼 이미지</button>
+              <span id="svCopyFeedback" style="font-size:11px"></span>
             </div>
           </header>
 
-          <section class="sv-section sv-section-grid">
-            <h2 class="sv-section-title">시즌별 수집 현황</h2>
-            <div class="sv-season-grid">${seasonTable}</div>
-          </section>
-
           ${summaryTemplate === 'default' ? `
-          <section class="sv-section">
-            <h2 class="sv-section-title">카드 목록
-              <span class="sv-badge" style="background:#2e7d32">${ownedUnique} 보유</span>
-              ${missing.length > 0 ? `<span class="sv-badge sv-badge-miss">${missing.length} 미보유</span>` : ''}
-            </h2>
-            <div class="sv-legend">
-              <span class="sv-chip" style="border-color:#b8860b">UR 보유</span>
-              <span class="sv-chip sv-chip-dup" style="border-color:#e65100">여분 ×N</span>
-              <span class="sv-chip sv-chip-unowned">미보유</span>
-            </div>
-            ${unifiedGrid}
-          </section>
-          ${dupSection}
+            <section class="sv-section sv-section-grid">
+              <h2 class="sv-section-title">시즌별 수집 현황</h2>
+              <div class="sv-season-grid">${seasonTable}</div>
+            </section>
+            <section class="sv-section">
+              <h2 class="sv-section-title">카드 목록 <span class="sv-badge" style="background:#2e7d32">${ownedUnique} 보유</span>${missing.length?`<span class="sv-badge sv-badge-miss">${missing.length} 미보유</span>`:''}</h2>
+              <div class="sv-legend">
+                <span class="sv-chip" style="border-color:#b8860b">UR 보유</span>
+                <span class="sv-chip sv-chip-dup" style="border-color:#e65100">여분 ×N</span>
+                <span class="sv-chip sv-chip-unowned">미보유</span>
+              </div>
+              ${unifiedGrid}
+            </section>
+            ${dupSection}
           ` : summaryTemplate === 'minimal' ? `
-          <section class="sv-section">
-            <h2 class="sv-section-title">카드 목록</h2>
-            ${minimalGrid}
-          </section>
-          ${dupSection}
+            <section class="sv-section">
+              <h2 class="sv-section-title">전체 카드 목록</h2>
+              ${minimalGrid}
+            </section>
+            ${dupSection}
+          ` : summaryTemplate === 'season' ? `
+            <div class="sc-grid">${seasonCards}</div>
+          ` : summaryTemplate === 'dogam' ? `
+            <section class="sv-section">
+              <h2 class="sv-section-title">도감</h2>
+              <div class="sv-legend">
+                ${RARITIES.map(r=>`<span class="dg-legend-sq" style="background:${RC[r]};border-color:${RC[r]}"></span><span style="font-size:11px;color:${RC[r]};font-weight:700;margin-right:8px">${r}</span>`).join('')}
+                <span class="dg-legend-sq" style="background:transparent;border-color:#ddd;border-style:dashed"></span><span style="font-size:11px;color:#bbb;margin-right:8px">미보유</span>
+              </div>
+              ${dogamGrid}
+            </section>
+          ` : summaryTemplate === 'trader' ? `
+            <section class="sv-section">
+              <h2 class="sv-section-title">트레이드 현황</h2>
+              ${traderSection}
+            </section>
           ` : `
-          ${seasonCards}
+            <section class="sv-section">
+              <h2 class="sv-section-title">희귀도별 현황</h2>
+              ${rarityFirst}
+            </section>
           `}
 
-          ${missing.length === 0 ? '<section class="sv-section"><p class="sv-complete-msg">모든 카드를 보유하고 있습니다! 🎉</p></section>' : ''}
+          ${missing.length === 0 ? '<p class="sv-complete-msg" style="text-align:center;padding:20px 0">모든 카드를 보유하고 있습니다! 🎉</p>' : ''}
 
         </div>`;
     }
