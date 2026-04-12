@@ -1305,7 +1305,7 @@
 
     // ── Print / PDF ─────────────────────────────────────────
     function printCollection() {
-      const baseUrl    = location.href.split('#')[0].replace(/\/[^/]*$/, '/');
+      const base       = location.origin + '/';
       const totalAll   = CARDS.length;
       const totalOwned = CARDS.filter(c => isOwned(c.src)).length;
       const totalPct   = Math.round(totalOwned / totalAll * 100);
@@ -1325,7 +1325,7 @@
           return `
             <div class="slot ${have ? 'have' : 'miss'}">
               <div class="img-wrap">
-                <img src="${baseUrl}${c.src}" />
+                <img src="${base}${c.src}" />
                 ${have ? `<div class="check">${cnt === 1 ? '✓' : '×' + cnt}</div>` : ''}
               </div>
               <div class="label">
@@ -1365,7 +1365,6 @@
       const html = `<!DOCTYPE html>
 <html lang="ko"><head>
 <meta charset="UTF-8"/>
-<base href="${baseUrl}"/>
 <title>ズトマヨカード コレクション</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1487,9 +1486,23 @@
 
 </body></html>`;
 
-      const w = window.open('', '_blank');
-      w.document.write(html);
-      w.document.close();
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
+
+    // ── Print current summary template ──────────────────────
+    function printSummary() {
+      // Hide UI chrome, print, restore
+      const hide = [
+        document.querySelector('.sv-back-row'),
+        document.querySelector('.sv-hero-actions'),
+      ].filter(Boolean);
+      hide.forEach(el => el.style.display = 'none');
+      window.print();
+      // Restore after print dialog closes
+      requestAnimationFrame(() => hide.forEach(el => el.style.display = ''));
     }
 
     // ── Summary view ────────────────────────────────────────
@@ -1829,7 +1842,7 @@
               }).join('')}
             </div>
             <div class="sv-hero-actions">
-              <button class="sv-link-btn" onclick="printCollection()">🖨 PDF</button>
+              <button class="sv-link-btn" onclick="printSummary()">🖨 PDF</button>
               <button class="sv-link-btn" onclick="copyMissingList()">📋 미보유 복사</button>
               <button class="sv-link-btn" onclick="generateStatsImage()">🖼 이미지</button>
               <span id="svCopyFeedback" style="font-size:11px"></span>
@@ -1850,7 +1863,6 @@
               </div>
               ${unifiedGrid}
             </section>
-            ${dupSection}
           ` : summaryTemplate === 'minimal' ? `
             <section class="sv-section">
               <h2 class="sv-section-title">전체 카드 목록</h2>

@@ -2276,3 +2276,37 @@ button.active {
   .de-name-input { font-size: 13px; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   PRINT (summary template → PDF)
+   ═══════════════════════════════════════════════════════════ */
+@media print {
+  /* Hide everything except the summary */
+  header, .coll-sub-bar, .sidebar,
+  #cardModal, #hoverPreview, #likesRanking, .deck-toast,
+  #compareBanner, #profileBanner, #tradeSummary,
+  #deckView, .card-grid, #overview,
+  .sv-back-row, .sv-hero-actions, .sv-template-picker {
+    display: none !important;
+  }
+
+  body { background: #fff; }
+
+  .main-area, #summaryView {
+    display: block !important;
+  }
+
+  .sv-wrap { padding: 0; max-width: 100%; }
+
+  /* Keep header dark but printable */
+  .sv-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Season cards need color */
+  .sc-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Page breaks between seasons in season template */
+  .sc-card { page-break-inside: avoid; }
+
+  /* Dogam grid — no break inside a season */
+  .dg-season { page-break-inside: avoid; }
+}
+
