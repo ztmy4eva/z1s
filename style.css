@@ -2279,7 +2279,19 @@ button.active {
 /* ═══════════════════════════════════════════════════════════
    PRINT (summary template → PDF)
    ═══════════════════════════════════════════════════════════ */
+/* ── Print-only title ────────────────────────────────────── */
+.sv-print-title {
+  display: none; /* hidden on screen, shown only during print */
+  font-size: 20px;
+  font-weight: 900;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #1a1a2e;
+}
+
 @media print {
+  .sv-print-title { display: block; }
   /* Hide everything except the summary */
   header, .coll-sub-bar, .sidebar,
   #cardModal, #hoverPreview, #likesRanking, .deck-toast,
