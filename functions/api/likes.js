@@ -52,14 +52,14 @@ export async function onRequestPost({ request, env, ctx }) {
   const { card } = body;
   if (!card || !CARD_RE.test(card)) return err('Invalid card key');
 
-  // Increment count (2 KV ops — fast path)
+  // Increment count
   const likeKey = 'like:' + card;
   const prev  = parseInt(await env.COLLECTIONS.get(likeKey) || '0', 10);
   const count = prev + 1;
   await env.COLLECTIONS.put(likeKey, String(count));
 
-  // Update sorted index in the background — doesn't block the response
-  ctx.waitUntil(updateIndex(env, card, count));
+  // Update ranking index synchronously so rankings reflect immediately
+  await updateIndex(env, card, count);
 
   return json({ count });
 }

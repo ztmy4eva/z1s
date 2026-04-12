@@ -7,6 +7,7 @@
   <link rel="icon" href="cards/favicon.png" />
   <link rel="apple-touch-icon" href="cards/favicon.png" />
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 </head>
 <body>
 
@@ -1494,28 +1495,51 @@
 
     // ── Print current summary template ──────────────────────
     function printSummary() {
-      const wrap   = document.querySelector('.sv-wrap');
+      const el     = document.getElementById('summaryView');
       const acctId = getAcctId();
       const title  = acctId ? `${acctId}의 ZUTOMAYO CARD 컬렉션` : 'ZUTOMAYO CARD 컬렉션';
+      const date   = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
+      const base   = location.origin + '/';
 
-      // Inject print-only title above everything
-      const titleEl = document.createElement('div');
-      titleEl.className = 'sv-print-title';
-      titleEl.textContent = title;
-      wrap.insertBefore(titleEl, wrap.firstChild);
+      // Clone and strip interactive chrome
+      const clone = el.cloneNode(true);
+      clone.querySelector('.sv-back-row')?.remove();
+      clone.querySelector('.sv-hero-actions')?.remove();
 
-      const hide = [
-        document.querySelector('.sv-back-row'),
-        document.querySelector('.sv-hero-actions'),
-      ].filter(Boolean);
-      hide.forEach(el => el.style.display = 'none');
+      const html = `<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8"/>
+<title>${title}</title>
+<link rel="stylesheet" href="${base}style.css"/>
+<style>
+  body { margin:0; background:#fff; }
+  .sv-wrap { padding:16px 24px 40px; max-width:100%; }
+  .sv-print-header { padding:10px 0; border-bottom:2px solid #1a1a2e; margin-bottom:18px; }
+  .sv-print-header h1 { font-size:20px;font-weight:900;color:#1a1a2e;margin:0 0 4px; }
+  .sv-print-header .date { font-size:12px;color:#aaa; }
+  @media print {
+    .no-print { display:none!important; }
+    .sv-header,.sc-card { -webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  }
+</style>
+</head><body>
+<div class="no-print" style="position:sticky;top:0;z-index:999;background:#1a1a2e;padding:10px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+  <button onclick="window.print()" style="padding:8px 18px;font-size:14px;font-weight:700;border:none;border-radius:6px;background:#69f0ae;color:#1a1a2e;cursor:pointer">🖨 인쇄 / PDF 저장</button>
+  <button onclick="window.close()" style="padding:8px 14px;font-size:14px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;background:transparent;color:#e0e0ff;cursor:pointer">닫기</button>
+  <span style="font-size:12px;color:rgba(255,255,255,0.45)">"배경 그래픽" 옵션을 켜면 색상이 올바르게 출력됩니다</span>
+</div>
+<div class="sv-wrap">
+  <div class="sv-print-header">
+    <h1>${title}</h1>
+    <div class="date">${date}</div>
+  </div>
+  ${clone.innerHTML}
+</div>
+</body></html>`;
 
-      window.print();
-
-      requestAnimationFrame(() => {
-        hide.forEach(el => el.style.display = '');
-        titleEl.remove();
-      });
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url  = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     }
 
     // ── Summary view ────────────────────────────────────────
@@ -2015,158 +2039,51 @@
     }
 
     // ── Canvas stats image ────────────────────────────────────
-    function generateStatsImage() {
-      const W = 900, H = 720;
-      const canvas = document.createElement('canvas');
-      canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext('2d');
+    async function generateStatsImage() {
+      if (typeof html2canvas === 'undefined') {
+        showFeedback('svCopyFeedback', '라이브러리 로딩 중, 잠시 후 다시 시도하세요', 'feedback-err');
+        return;
+      }
 
-      const PAD = 48;
-
-      // ── Background ──
-      const grad = ctx.createLinearGradient(0, 0, W, H);
-      grad.addColorStop(0, '#1a1a2e');
-      grad.addColorStop(1, '#1e2640');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // ── Title ──
+      const el     = document.getElementById('summaryView');
       const acctId = getAcctId();
       const title  = acctId ? `${acctId}의 ZUTOMAYO CARD 컬렉션` : 'ZUTOMAYO CARD 컬렉션';
-      ctx.fillStyle = '#e0e0ff';
-      ctx.font = 'bold 28px sans-serif';
-      ctx.fillText(title, PAD, 52);
+      const fb     = document.getElementById('svCopyFeedback');
 
-      const date = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' });
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.font = '14px sans-serif';
-      ctx.fillText(date, PAD, 76);
+      // Temporarily inject title, hide chrome
+      const titleEl = document.createElement('div');
+      titleEl.style.cssText = 'font-size:18px;font-weight:900;color:#1a1a2e;padding:12px 0 10px;border-bottom:2px solid #1a1a2e;margin-bottom:16px';
+      titleEl.textContent = title;
+      const wrap = el.querySelector('.sv-wrap');
+      wrap.insertBefore(titleEl, wrap.firstChild);
 
-      // ── Divider ──
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(PAD, 90); ctx.lineTo(W - PAD, 90); ctx.stroke();
+      const hide = ['.sv-back-row', '.sv-hero-actions']
+        .map(s => el.querySelector(s)).filter(Boolean);
+      hide.forEach(h => h.style.visibility = 'hidden');
 
-      // ── Top section: big stat + season bars ──
-      const totalCards  = CARDS.length;
-      const ownedUnique = CARDS.filter(c => isOwned(c.src)).length;
-      const pct = Math.round(ownedUnique / totalCards * 100);
+      if (fb) { fb.textContent = '이미지 생성 중…'; fb.style.color = '#888'; }
 
-      // Big number (left column)
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 72px sans-serif';
-      ctx.fillText(ownedUnique, PAD, 178);
-      const numW = ctx.measureText(String(ownedUnique)).width;
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = 'bold 32px sans-serif';
-      ctx.fillText(' / ' + totalCards, PAD + numW + 6, 178);
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.font = '14px sans-serif';
-      ctx.fillText('보유 카드', PAD, 200);
-
-      // Completion pill
-      const pillX = PAD, pillY = 216, pillW = 90, pillH = 32;
-      ctx.fillStyle = '#69f0ae';
-      ctx.beginPath(); ctx.roundRect(pillX, pillY, pillW, pillH, 16); ctx.fill();
-      ctx.fillStyle = '#1a1a2e';
-      ctx.font = 'bold 18px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(pct + '%', pillX + pillW / 2, pillY + 22);
-      ctx.textAlign = 'left';
-
-      // Season bars (right column)
-      const SCOLS = ['#5c6bc0','#26a69a','#ef6c00','#8d6e63'];
-      const bx = 220, bw = W - bx - PAD, bh = 18, bg = 38;
-      const by = 114;
-      ['1','2','3','4'].forEach((s, i) => {
-        const sc  = CARDS.filter(c => c.season === s);
-        const own = sc.filter(c => isOwned(c.src)).length;
-        const p   = sc.length ? own / sc.length : 0;
-        const y   = by + i * bg;
-
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
-        ctx.font = 'bold 13px sans-serif';
-        ctx.fillText('시즌 ' + s, bx, y + 13);
-
-        const barX2 = bx + 56;
-        const barW2 = bw - 110;
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.beginPath(); ctx.roundRect(barX2, y, barW2, bh, 4); ctx.fill();
-        ctx.fillStyle = SCOLS[i];
-        ctx.beginPath(); ctx.roundRect(barX2, y, Math.max(barW2 * p, 4), bh, 4); ctx.fill();
-
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.font = '12px sans-serif';
-        ctx.fillText(`${own}/${sc.length} (${Math.round(p*100)}%)`, barX2 + barW2 + 10, y + 13);
-      });
-
-      // ── Divider ──
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.beginPath(); ctx.moveTo(PAD, 270); ctx.lineTo(W - PAD, 270); ctx.stroke();
-
-      // ── Bottom section: rarity breakdown ──
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.fillText('등급별 현황', PAD, 295);
-
-      const RARITIES = ['UR','SR','R','N','SE'];
-      const RC_IMG   = { UR:'#b8860b', SR:'#7b5ea7', R:'#1565c0', N:'#888', SE:'#ad1457' };
-      const colW = (W - PAD * 2) / RARITIES.length;
-
-      RARITIES.forEach((r, i) => {
-        const cards = CARDS.filter(c => c.rarity === r || (r === 'SE' && c.rarity === 'SEC'));
-        const own   = cards.filter(c => isOwned(c.src)).length;
-        const tot   = cards.length;
-        const rp    = tot ? own / tot : 0;
-        const cx    = PAD + i * colW + colW / 2;
-
-        // Card block background
-        const bkX = PAD + i * colW + 6, bkY = 306, bkW = colW - 12, bkH = 370;
-        ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.beginPath(); ctx.roundRect(bkX, bkY, bkW, bkH, 8); ctx.fill();
-
-        // Rarity label
-        ctx.fillStyle = RC_IMG[r];
-        ctx.font = 'bold 20px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(r, cx, 338);
-
-        // Owned / total
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 28px sans-serif';
-        ctx.fillText(own, cx, 380);
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.font = '14px sans-serif';
-        ctx.fillText('/ ' + tot, cx, 400);
-
-        // Vertical bar
-        const vbX = cx - 14, vbY = 416, vbW = 28, vbH = 200;
-        ctx.fillStyle = 'rgba(255,255,255,0.08)';
-        ctx.beginPath(); ctx.roundRect(vbX, vbY, vbW, vbH, 4); ctx.fill();
-        ctx.fillStyle = RC_IMG[r];
-        const filled = vbH * rp;
-        ctx.beginPath(); ctx.roundRect(vbX, vbY + vbH - filled, vbW, Math.max(filled, 4), 4); ctx.fill();
-
-        // Pct
-        ctx.fillStyle = rp === 1 ? '#69f0ae' : 'rgba(255,255,255,0.5)';
-        ctx.font = `bold 13px sans-serif`;
-        ctx.fillText(Math.round(rp * 100) + '%', cx, 636);
-
-        ctx.textAlign = 'left';
-      });
-
-      // ── Footer ──
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'right';
-      ctx.fillText('ZUTOMAYO CARD 한글 번역', W - PAD, H - 16);
-      ctx.textAlign = 'left';
-
-      // Download
-      const a = document.createElement('a');
-      a.download = 'zutomayo-card-collection.png';
-      a.href = canvas.toDataURL('image/png');
-      a.click();
+      try {
+        const canvas = await html2canvas(el, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          logging: false,
+          scrollY: 0,
+          windowWidth: el.scrollWidth,
+        });
+        const a = document.createElement('a');
+        a.download = 'zutomayo-collection.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+        if (fb) { fb.textContent = ''; }
+      } catch (e) {
+        if (fb) { fb.textContent = '이미지 생성 실패'; fb.style.color = '#c62828'; }
+      } finally {
+        titleEl.remove();
+        hide.forEach(h => h.style.visibility = '');
+      }
     }
 
     // ════════════════════════════════════════════════════════
